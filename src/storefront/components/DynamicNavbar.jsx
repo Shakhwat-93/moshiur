@@ -20,8 +20,8 @@ export default function DynamicNavbar({ onOpenAdmin }) {
           <li><a href="#problems" onClick={() => setMobileNavOpen(false)}>সমস্যাসমূহ</a></li>
           <li><a href="#benefits" onClick={() => setMobileNavOpen(false)}>উপকারিতা</a></li>
           <li><a href="#packs" onClick={() => setMobileNavOpen(false)}>প্যাকেজ</a></li>
-          <li><a href="#lab-test" onClick={() => setMobileNavOpen(false)}>ল্যাব টেস্ট</a></li>
           <li><a href="#reviews" onClick={() => setMobileNavOpen(false)}>রিভিউ</a></li>
+          <li><a href="#lab-test" onClick={() => setMobileNavOpen(false)}>ল্যাব টেস্ট</a></li>
           <li><a href="#faq" onClick={() => setMobileNavOpen(false)}>FAQ</a></li>
           <li><a href="#info" onClick={() => setMobileNavOpen(false)}>সেবনের নিয়ম</a></li>
         </ul>

@@ -35,10 +35,23 @@ export const DEFAULT_THEME_SETTINGS = {
   button_style: 'rounded'
 };
 
+export const DEFAULT_HOMEPAGE_SECTIONS = [
+  { id: 'hero', title: 'হিরো সেকশন', sort_order: 1, is_enabled: true },
+  { id: 'trust_strip', title: 'ট্রাস্ট ফিচার স্ট্রিপ', sort_order: 2, is_enabled: true },
+  { id: 'symptoms', title: 'উপসর্গসমূহ (লক্ষণ)', sort_order: 3, is_enabled: true },
+  { id: 'benefits', title: 'উপকারিতাসমূহ', sort_order: 4, is_enabled: true },
+  { id: 'before_after', title: 'বিফোর-আফটার কম্প্যারিজন স্লাইডার', sort_order: 5, is_enabled: true },
+  { id: 'packages', title: 'প্যাকেজ ও অফার মূল্য', sort_order: 6, is_enabled: true },
+  { id: 'reviews', title: 'গ্রাহকদের রিভিউ', sort_order: 7, is_enabled: true },
+  { id: 'order_form', title: 'অর্ডার ফর্ম', sort_order: 8, is_enabled: true },
+  { id: 'lab_report', title: 'ল্যাব টেস্ট রিপোর্ট', sort_order: 9, is_enabled: true },
+  { id: 'info', title: 'সেবনের নিয়ম ও তথ্য', sort_order: 10, is_enabled: true }
+];
+
 export function CmsProvider({ children }) {
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
   const [themeSettings, setThemeSettings] = useState(DEFAULT_THEME_SETTINGS);
-  const [homepageSections, setHomepageSections] = useState([]);
+  const [homepageSections, setHomepageSections] = useState(DEFAULT_HOMEPAGE_SECTIONS);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);

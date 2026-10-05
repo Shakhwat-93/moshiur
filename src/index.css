@@ -1845,6 +1845,7 @@ a {
     backdrop-filter: blur(4px);
     z-index: 5;
     letter-spacing: 0.5px;
+    pointer-events: none;
 }
 
 .vb2-ba .tag.b {
@@ -1867,6 +1868,7 @@ a {
     transform: translateX(-50%);
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.45);
     z-index: 10;
+    pointer-events: none;
 }
 
 .vb2-ba .knob {
@@ -1885,6 +1887,12 @@ a {
     color: var(--g);
     font-size: 18px;
     font-weight: 800;
+    pointer-events: none;
+    transition: transform 0.15s ease;
+}
+
+.vb2-ba:active .knob {
+    transform: translate(-50%, -50%) scale(1.12);
 }
 
 .vb2-ba-range {

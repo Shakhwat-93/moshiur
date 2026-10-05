@@ -239,7 +239,119 @@ a {
 }
 
 /* ---------- 3. HERO SECTION (HIGH CONVERSION REAL PRODUCT DISPLAY) ---------- */
-.vb2-hero {
+.vb2-hero,
+.vb2-hero-wrap {
+    width: 100%;
+}
+
+/* ============================================================
+   MOBILE HERO VIEW (< 768px)
+   Matches customer reference design 100%
+   ============================================================ */
+.vb2-hero-mobile {
+    display: none;
+    width: 100%;
+    background: #ffffff;
+    padding-bottom: 20px;
+}
+
+.vb2-hm-banner {
+    background-color: #520D04;
+    padding: 16px 14px 14px;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.vb2-hm-title {
+    font-family: 'Noto Serif Bengali', 'Tiro Bangla', serif;
+    font-size: 21px;
+    line-height: 1.38;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.2px;
+}
+
+.vb2-hm-title .highlight-yellow {
+    color: #ffff00;
+}
+
+.vb2-hm-sub {
+    font-family: 'Anek Bangla', 'Hind Siliguri', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #FFFFFF;
+    margin: 0;
+    opacity: 0.95;
+    line-height: 1.4;
+}
+
+.vb2-hm-image-wrap {
+    padding: 14px 12px 0;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.vb2-hm-img {
+    width: 95%;
+    max-width: 480px;
+    height: auto;
+    border: 4px solid #520D04;
+    border-radius: 10px;
+    display: block;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    box-sizing: border-box;
+}
+
+.vb2-hm-btn-wrap {
+    padding: 16px 14px 0;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.vb2-hm-cta-btn {
+    background-color: #FE6F20;
+    color: #FFFFFF !important;
+    font-family: 'Hind Siliguri', 'Anek Bangla', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    border: 2px solid #FFFFFF;
+    border-radius: 10px;
+    box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 95%;
+    max-width: 360px;
+    padding: 12px 24px;
+    transition: background-color 0.2s, transform 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.vb2-hm-cta-btn:hover {
+    background-color: #007C06;
+    transform: translateY(-2px);
+}
+
+.vb2-hm-cta-btn .btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+/* ============================================================
+   DESKTOP HERO VIEW (>= 768px)
+   Spacious, agency-level 2-column layout
+   ============================================================ */
+.vb2-hero-desktop {
+    display: block;
     background: radial-gradient(120% 120% at 50% 0%, #0d2e1b 0%, var(--hero-dark) 70%);
     color: #ffffff;
     padding: clamp(48px, 5.5vw, 92px) var(--container-padding) clamp(54px, 6.5vw, 108px);
@@ -248,7 +360,7 @@ a {
     width: 100%;
 }
 
-.vb2-hero::before {
+.vb2-hero-desktop::before {
     content: "";
     position: absolute;
     top: -20%;
@@ -287,7 +399,8 @@ a {
     margin-bottom: clamp(14px, 1.8vw, 22px);
 }
 
-.vb2-hero h1 {
+.vb2-hero h1,
+.vb2-hero-desktop h1 {
     font-size: clamp(28px, 3.4vw, 46px);
     line-height: 1.28;
     font-weight: 800;
@@ -295,7 +408,8 @@ a {
     color: #ffffff;
 }
 
-.vb2-hero h1 em {
+.vb2-hero h1 em,
+.vb2-hero-desktop h1 em {
     display: block;
     color: #4ade80;
     font-style: normal;
@@ -303,7 +417,8 @@ a {
     margin-top: 4px;
 }
 
-.vb2-hero p {
+.vb2-hero p,
+.vb2-hero-desktop p {
     color: #cbd5e1;
     font-size: clamp(15px, 1.15vw, 18px);
     line-height: 1.65;
@@ -476,10 +591,22 @@ a {
     transform: translateY(-2px);
 }
 
-@media(max-width: 900px) {
-    .vb2-hero-grid { grid-template-columns: 1fr; gap: 32px; }
-    .vb2-hero { padding: 42px var(--container-padding) 48px; }
-    .vb2-hero-card { max-width: 400px; }
+@media(max-width: 768px) {
+    .vb2-hero-desktop {
+        display: none !important;
+    }
+    .vb2-hero-mobile {
+        display: block !important;
+    }
+}
+
+@media(min-width: 769px) {
+    .vb2-hero-desktop {
+        display: block !important;
+    }
+    .vb2-hero-mobile {
+        display: none !important;
+    }
 }
 
 @media(min-width: 1600px) {

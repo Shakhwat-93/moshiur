@@ -15,6 +15,7 @@ import DynamicFaq from './components/DynamicFaq';
 import InfoSection from '../components/InfoSection';
 import DynamicFooter from './components/DynamicFooter';
 import DynamicFloatingActions from './components/DynamicFloatingActions';
+import PixelTracker from './components/PixelTracker';
 import SocialToast from '../components/SocialToast';
 import SuccessModal from '../components/SuccessModal';
 
@@ -97,6 +98,9 @@ export default function Storefront({ onOpenAdmin }) {
 
       {/* Social proof toast */}
       <SocialToast />
+
+      {/* Dynamic Pixel & Analytics Tracker */}
+      <PixelTracker />
 
       {/* Success Modal */}
       <SuccessModal

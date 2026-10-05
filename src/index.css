@@ -1757,3 +1757,102 @@ a {
     font-family: inherit;
     box-shadow: 0 4px 14px rgba(10, 141, 73, 0.35);
 }
+
+/* ---------- 13. BEFORE / AFTER COMPARISON SLIDER ---------- */
+.vb2-ba-wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.vb2-ba {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px rgba(7, 23, 14, 0.15);
+    user-select: none;
+    touch-action: none;
+    cursor: ew-resize;
+    border: 2px solid var(--border);
+    background: #000;
+}
+
+.vb2-ba img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.vb2-ba .after {
+    clip-path: inset(0 0 0 var(--ba-pos, 50%));
+}
+
+.vb2-ba .tag {
+    position: absolute;
+    bottom: 16px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    letter-spacing: 0.5px;
+}
+
+.vb2-ba .tag.b {
+    left: 16px;
+}
+
+.vb2-ba .tag.a {
+    right: 16px;
+    background: var(--g);
+    box-shadow: 0 2px 8px rgba(10, 141, 73, 0.4);
+}
+
+.vb2-ba .bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--ba-pos, 50%);
+    width: 4px;
+    background: #ffffff;
+    transform: translateX(-50%);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.45);
+    z-index: 10;
+}
+
+.vb2-ba .knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--g);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.vb2-ba-range {
+    width: 100%;
+    margin-top: 18px;
+    accent-color: var(--g);
+    cursor: pointer;
+    height: 8px;
+}
+

@@ -6,6 +6,7 @@ import DynamicHero from './components/DynamicHero';
 import DynamicTrustStrip from './components/DynamicTrustStrip';
 import DynamicSymptoms from './components/DynamicSymptoms';
 import DynamicBenefits from './components/DynamicBenefits';
+import DynamicBeforeAfter from './components/DynamicBeforeAfter';
 import DynamicPackages from './components/DynamicPackages';
 import DynamicLabReport from './components/DynamicLabReport';
 import DynamicReviews from './components/DynamicReviews';
@@ -35,6 +36,8 @@ export default function Storefront({ onOpenAdmin }) {
         return <DynamicSymptoms key={sec.id} />;
       case 'benefits':
         return <DynamicBenefits key={sec.id} />;
+      case 'before_after':
+        return <DynamicBeforeAfter key={sec.id} />;
       case 'packages':
         return (
           <DynamicPackages
@@ -74,7 +77,14 @@ export default function Storefront({ onOpenAdmin }) {
 
       {/* Dynamic Homepage Sections loop (Ordered by sort_order from Supabase) */}
       <main>
-        {homepageSections.map((sec) => renderSection(sec))}
+        {homepageSections.map((sec) => (
+          <React.Fragment key={sec.id}>
+            {renderSection(sec)}
+            {sec.id === 'benefits' && !homepageSections.some((s) => s.id === 'before_after') && (
+              <DynamicBeforeAfter />
+            )}
+          </React.Fragment>
+        ))}
         {/* Render FAQ if not explicitly in sections */}
         {!homepageSections.some((s) => s.id === 'faq') && <DynamicFaq />}
       </main>

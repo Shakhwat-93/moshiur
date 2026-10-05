@@ -7,28 +7,28 @@ export default function DynamicTrustStrip() {
 
   if (sec && sec.is_enabled === false) return null;
 
-  const items = sec?.config?.items || [
-    { icon: '🌿', title: '১০০% প্রাকৃতিক ভেষজ', desc: 'রাসায়নিক ও স্টেরয়েডমুক্ত ফর্মুলা' },
-    { icon: '🚚', title: 'সারা দেশে ফ্রি ডেলিভারি', desc: 'পণ্য দেখে মূল্য পরিশোধ করুন' },
-    { icon: '🛡️', title: 'ক্যাশ অন ডেলিভারি', desc: 'কোনো অগ্রিম পেমেন্টের ঝুঁকি নেই' },
-    { icon: '★', title: 'হাজারো সন্তুষ্ট গ্রাহক', desc: '৯৫%+ সফল পুনরাবৃত্তি গ্রাহক' }
+  const defaultItems = [
+    { icon: '🌿', title: '১০০% ভেষজ উপাদান', desc: 'কোনো ক্ষতিকর রাসায়নিক নেই' },
+    { icon: '🔬', title: 'ল্যাব টেস্ট পরীক্ষিত', desc: 'গবেষণায় প্রমাণিত বিশুদ্ধতা' },
+    { icon: '🛡️', title: 'ক্যাশ অন ডেলিভারি', desc: 'পণ্য হাতে পেয়ে টাকা দিন' },
+    { icon: '🚚', title: 'সারা দেশে ফ্রি ডেলিভারি', desc: 'দ্রুততম সময়ে হোম ডেলিভারি' }
   ];
 
+  const items = sec?.config?.items && sec.config.items.length > 0 ? sec.config.items : defaultItems;
+
   return (
-    <section className="vb2-trust-strip">
-      <div className="container">
-        <div className="vb2-trust-grid">
-          {items.map((item, idx) => (
-            <div className="vb2-trust-card" key={idx}>
-              <div className="icon">{item.icon}</div>
-              <div>
-                <strong>{item.title}</strong>
-                <p>{item.desc}</p>
-              </div>
+    <div className="vb2-trust">
+      <div className="trust-grid">
+        {items.map((item, idx) => (
+          <div className="t-item" key={idx}>
+            <div className="t-icon">{item.icon}</div>
+            <div>
+              <b>{item.title}</b>
+              <small>{item.desc}</small>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }

@@ -416,20 +416,24 @@ a {
 }
 
 /* ---------- 4. TRUST STRIP ---------- */
-.vb2-trust {
+.vb2-trust,
+.vb2-trust-strip {
     background: #ffffff;
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
+    width: 100%;
 }
 
-.vb2-trust .trust-grid {
+.vb2-trust .trust-grid,
+.vb2-trust-grid {
     max-width: 1080px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
 }
 
-.vb2-trust .t-item {
+.vb2-trust .t-item,
+.vb2-trust-card {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -437,11 +441,14 @@ a {
     border-right: 1px solid var(--border);
 }
 
-.vb2-trust .t-item:last-child {
+.vb2-trust .t-item:last-child,
+.vb2-trust-card:last-child {
     border-right: none;
 }
 
-.vb2-trust .t-icon {
+.vb2-trust .t-icon,
+.vb2-trust-strip .icon,
+.vb2-trust-strip .t-icon {
     width: 48px;
     height: 48px;
     border-radius: 50%;
@@ -454,7 +461,9 @@ a {
     flex-shrink: 0;
 }
 
-.vb2-trust b {
+.vb2-trust b,
+.vb2-trust-strip strong,
+.vb2-trust-strip b {
     display: block;
     font-size: 15px;
     font-weight: 700;
@@ -462,22 +471,31 @@ a {
     margin-bottom: 2px;
 }
 
-.vb2-trust small {
+.vb2-trust small,
+.vb2-trust-strip small,
+.vb2-trust-strip p {
     color: var(--mut);
     font-size: 12.5px;
     line-height: 1.3;
     display: block;
+    margin: 0;
 }
 
 @media(max-width: 860px) {
-    .vb2-trust .trust-grid { grid-template-columns: 1fr 1fr; }
-    .vb2-trust .t-item:nth-child(2) { border-right: none; }
-    .vb2-trust .t-item:nth-child(1), .vb2-trust .t-item:nth-child(2) { border-bottom: 1px solid var(--border); }
+    .vb2-trust .trust-grid,
+    .vb2-trust-grid { grid-template-columns: 1fr 1fr; }
+    .vb2-trust .t-item:nth-child(2),
+    .vb2-trust-card:nth-child(2) { border-right: none; }
+    .vb2-trust .t-item:nth-child(1), .vb2-trust .t-item:nth-child(2),
+    .vb2-trust-card:nth-child(1), .vb2-trust-card:nth-child(2) { border-bottom: 1px solid var(--border); }
 }
 @media(max-width: 520px) {
-    .vb2-trust .t-item { padding: 14px 12px; }
-    .vb2-trust b { font-size: 13.5px; }
-    .vb2-trust small { font-size: 11.5px; }
+    .vb2-trust .t-item,
+    .vb2-trust-card { padding: 14px 12px; }
+    .vb2-trust b,
+    .vb2-trust-strip strong { font-size: 13.5px; }
+    .vb2-trust small,
+    .vb2-trust-strip p { font-size: 11.5px; }
 }
 
 /* ---------- 5. SECTION HEADINGS & COMMON STYLES ---------- */

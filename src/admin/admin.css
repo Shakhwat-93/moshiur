@@ -223,8 +223,8 @@
 }
 
 .adm-content {
-  padding: 20px;
-  max-width: 1160px;
+  padding: clamp(16px, 2vw, 28px);
+  max-width: clamp(1160px, 90vw, 1480px);
   width: 100%;
   margin: 0 auto;
 }

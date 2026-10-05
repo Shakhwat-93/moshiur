@@ -14,7 +14,7 @@ export default function DynamicFaq() {
 
   return (
     <section className="vb2-sec" id="faq">
-      <div className="container" style={{ maxWidth: '800px' }}>
+      <div className="container container-narrow">
         <div className="vb2-sec-header">
           <span className="vb2-eyebrow">সাধারণ জিজ্ঞাসা</span>
           <h2 className="vb2-title">

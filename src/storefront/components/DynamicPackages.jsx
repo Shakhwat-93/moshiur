@@ -1,8 +1,9 @@
 import React from 'react';
 import { useCms } from '../../context/CmsContext';
+import { trackViewContent, trackInitiateCheckout } from '../../lib/tracking';
 
 export default function DynamicPackages({ onSelectProduct }) {
-  const { products, homepageSections } = useCms();
+  const { products, siteSettings, homepageSections } = useCms();
   const sec = homepageSections.find((s) => s.id === 'packages');
 
   if (sec && sec.is_enabled === false) return null;
@@ -14,6 +15,12 @@ export default function DynamicPackages({ onSelectProduct }) {
   const badge = sec?.config?.badge || 'প্যাকেজ ও অফার মূল্য';
 
   const handleSelect = (productId) => {
+    const selected = activeProducts.find((p) => p.id === productId);
+    if (selected) {
+      trackViewContent({ product: selected, siteSettings });
+      trackInitiateCheckout({ product: selected, quantity: 1, total: selected.price, siteSettings });
+    }
+
     if (onSelectProduct) onSelectProduct(productId);
     const orderElem = document.getElementById('order');
     if (orderElem) orderElem.scrollIntoView({ behavior: 'smooth' });

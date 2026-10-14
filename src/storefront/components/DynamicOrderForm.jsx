@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCms } from '../../context/CmsContext';
 import { supabase } from '../../lib/supabase';
+import { trackInitiateCheckout, trackPurchase } from '../../lib/tracking';
 
 export default function DynamicOrderForm({ selectedProductId, onSelectProduct, onOrderSuccess }) {
   const { products, siteSettings, homepageSections } = useCms();
@@ -72,9 +73,22 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
     setQuantity((prev) => Math.max(1, prev + delta));
   };
 
+  const hasTrackedCheckoutRef = useRef(false);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Track InitiateCheckout on first interaction
+    if (!hasTrackedCheckoutRef.current && selectedProduct) {
+      hasTrackedCheckoutRef.current = true;
+      trackInitiateCheckout({
+        product: selectedProduct,
+        quantity: quantity,
+        total: grandTotal,
+        siteSettings
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -113,6 +127,12 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
         const { error } = await supabase.from('orders').insert([orderData]);
         if (error) console.warn('Supabase insert notice:', error.message);
       }
+
+      // Trigger High-Accuracy Purchase Tracking (Browser Pixel + CAPI + dataLayer)
+      trackPurchase({
+        order: orderData,
+        siteSettings
+      });
 
       if (onOrderSuccess) {
         onOrderSuccess(orderData);

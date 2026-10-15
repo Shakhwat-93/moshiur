@@ -19,10 +19,9 @@ import PixelTracker from './components/PixelTracker';
 import SocialToast from '../components/SocialToast';
 import SuccessModal from '../components/SuccessModal';
 
-export default function Storefront({ onOpenAdmin }) {
+export default function Storefront({ onOpenAdmin, onOrderSuccess }) {
   const { homepageSections, loading } = useCms();
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [completedOrder, setCompletedOrder] = useState(null);
 
   // Render individual section dynamically based on section id
   const renderSection = (sec) => {
@@ -56,7 +55,9 @@ export default function Storefront({ onOpenAdmin }) {
             key={sec.id}
             selectedProductId={selectedProductId}
             onSelectProduct={(pId) => setSelectedProductId(pId)}
-            onOrderSuccess={(order) => setCompletedOrder(order)}
+            onOrderSuccess={(order) => {
+              if (onOrderSuccess) onOrderSuccess(order);
+            }}
           />
         );
       case 'faq':
@@ -101,12 +102,6 @@ export default function Storefront({ onOpenAdmin }) {
 
       {/* Dynamic Pixel & Analytics Tracker */}
       <PixelTracker />
-
-      {/* Success Modal */}
-      <SuccessModal
-        order={completedOrder}
-        onClose={() => setCompletedOrder(null)}
-      />
     </div>
   );
 }

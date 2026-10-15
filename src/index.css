@@ -1907,3 +1907,229 @@ a {
         max-width: 520px;
     }
 }
+
+/* ============================================================
+   ORDER SUCCESS DEDICATED PAGE (RECEIPT VOUCHER STYLING)
+   ============================================================ */
+.success-page-shell {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 4vw, 40px) 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.success-card-wrapper {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.success-receipt-card {
+  background: #ffffff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  border: 1px solid #fed7aa;
+  position: relative;
+}
+
+.success-top-banner {
+  background: #fef5e7;
+  padding: 32px 24px 24px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.success-check-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
+}
+
+.success-title {
+  font-size: clamp(21px, 5vw, 25px);
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 10px;
+  line-height: 1.35;
+  letter-spacing: -0.3px;
+}
+
+.success-subtitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #c2410c;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.success-cut-line {
+  position: relative;
+  height: 0;
+  border-bottom: 2px dashed #fed7aa;
+  background: #fef5e7;
+}
+
+.success-cut-line::before,
+.success-cut-line::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #f3f4f6; /* matches page background */
+  z-index: 2;
+}
+
+.success-cut-line::before {
+  left: -10px;
+  box-shadow: inset -1px 0 0 #fed7aa;
+}
+
+.success-cut-line::after {
+  right: -10px;
+  box-shadow: inset 1px 0 0 #fed7aa;
+}
+
+.success-body {
+  background: #ffffff;
+  padding: 24px 22px;
+  box-sizing: border-box;
+}
+
+.success-sec-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.success-box-emoji {
+  font-size: 18px;
+}
+
+.success-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 14px 0 16px;
+}
+
+.success-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.success-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #f8fafc;
+}
+
+.success-lbl {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.success-val {
+  color: #1e293b;
+  font-weight: 700;
+  text-align: right;
+}
+
+.success-total-row {
+  background: #fffbf5;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 18px 0 16px;
+}
+
+.success-total-lbl {
+  color: #ea580c;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.success-total-val {
+  color: #ea580c;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.success-notice-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+
+.success-notice-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #166534;
+  flex-shrink: 0;
+}
+
+.success-notice-text {
+  font-size: 13px;
+  color: #166534;
+  line-height: 1.5;
+}
+
+.success-home-btn {
+  width: 100%;
+  background: #f9570c;
+  color: #ffffff !important;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(249, 87, 12, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.success-home-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(249, 87, 12, 0.5);
+  color: #ffffff;
+}
+
+.success-home-btn:active {
+  transform: translateY(0);
+}

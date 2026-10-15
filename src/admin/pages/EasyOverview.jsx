@@ -1,10 +1,46 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowRight, Package, Clock, ShoppingBag, DollarSign } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Package, Clock, ShoppingBag, DollarSign, Copy, Check } from 'lucide-react';
 import { useCms } from '../../context/CmsContext';
 
 export default function EasyOverview({ setActiveTab }) {
-  const { orders, products, homepageSections, siteSettings } = useCms();
+  const { orders, products, homepageSections, siteSettings, showToast } = useCms();
   const [showRevenue, setShowRevenue] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(null);
+
+  const copyOrderDetails = (ord) => {
+    if (!ord) return;
+
+    const formattedText = `📦 অর্ডারের বিস্তারিত বিবরণ:
+----------------------------------
+অর্ডার আইডি: #${ord.order_id || ord.id}
+কাস্টমার নাম: ${ord.name || 'N/A'}
+মোবাইল নম্বর: ${ord.phone || 'N/A'}
+ডেলিভারি ঠিকানা: ${ord.address || 'N/A'}${ord.area ? `, ${ord.area}` : ''}
+পণ্য/প্যাকেজ: ${ord.package_name || 'জিরো এলার্জি'}
+পরিমাণ: ${ord.quantity || 1} টি
+সর্বমোট মূল্য: ৳ ${ord.total_price || ord.total || 0} (ক্যাশ অন ডেলিভারি)
+স্ট্যাটাস: ${ord.status || 'pending'}
+----------------------------------`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formattedText);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = formattedText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+
+    setCopiedOrderId(ord.order_id || ord.id);
+    if (showToast) {
+      showToast(`অর্ডার #${ord.order_id || ord.id} এর সম্পূর্ণ বিবরণ কপি হয়েছে!`);
+    }
+    setTimeout(() => {
+      setCopiedOrderId(null);
+    }, 2500);
+  };
 
   const heroSec = homepageSections.find((s) => s.id === 'hero');
   const heroCfg = heroSec?.config || {};
@@ -110,6 +146,7 @@ export default function EasyOverview({ setActiveTab }) {
                   <th>ঠিকানা</th>
                   <th>মূল্য</th>
                   <th>স্ট্যাটাস</th>
+                  <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,11 +158,34 @@ export default function EasyOverview({ setActiveTab }) {
                     <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {o.address}
                     </td>
-                    <td style={{ fontWeight: 700, color: '#ea580c' }}>৳ {o.total}</td>
+                    <td style={{ fontWeight: 700, color: '#ea580c' }}>৳ {o.total_price || o.total || 0}</td>
                     <td>
                       <span className={`easy-status-tag ${o.status || 'pending'}`}>
                         {o.status === 'pending' ? 'Pending' : o.status === 'confirmed' ? 'Confirmed' : o.status}
                       </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        className="adm-btn adm-btn-sm"
+                        style={{
+                          background: copiedOrderId === (o.order_id || o.id) ? '#ecfdf5' : '#fff7ed',
+                          color: copiedOrderId === (o.order_id || o.id) ? '#059669' : '#ea580c',
+                          borderColor: copiedOrderId === (o.order_id || o.id) ? '#a7f3d0' : '#fed7aa',
+                          fontWeight: 600,
+                          padding: '4px 8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => copyOrderDetails(o)}
+                        title="এক ক্লিকে সম্পূর্ণ অর্ডার কপি করুন"
+                      >
+                        {copiedOrderId === (o.order_id || o.id) ? <Check size={12} color="#059669" /> : <Copy size={12} />}
+                        <span>{copiedOrderId === (o.order_id || o.id) ? 'কপি হয়েছে' : 'কপি'}</span>
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -11,15 +11,58 @@ import {
   Clock,
   Truck,
   XCircle,
-  FileText
+  FileText,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useCms } from '../../context/CmsContext';
 
 export default function OrdersManager() {
-  const { orders, updateOrderStatus, deleteOrder } = useCms();
+  const { orders, updateOrderStatus, deleteOrder, showToast } = useCms();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusTab, setStatusTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [copiedOrderId, setCopiedOrderId] = useState(null);
+
+  const copyOrderDetails = (ord) => {
+    if (!ord) return;
+
+    const dateStr = ord.created_at
+      ? new Date(ord.created_at).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' })
+      : new Date().toLocaleDateString('bn-BD');
+
+    const formattedText = `📦 অর্ডারের বিস্তারিত বিবরণ:
+----------------------------------
+অর্ডার আইডি: #${ord.order_id || ord.id}
+তারিখ: ${dateStr}
+কাস্টমার নাম: ${ord.name || 'N/A'}
+মোবাইল নম্বর: ${ord.phone || 'N/A'}
+ডেলিভারি ঠিকানা: ${ord.address || 'N/A'}${ord.area ? `, ${ord.area}` : ''}
+পণ্য/প্যাকেজ: ${ord.package_name || 'জিরো এলার্জি'}
+পরিমাণ: ${ord.quantity || 1} টি
+সর্বমোট মূল্য: ৳ ${ord.total_price || ord.total || 0} (ক্যাশ অন ডেলিভারি)
+স্ট্যাটাস: ${ord.status || 'pending'}
+----------------------------------`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formattedText);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = formattedText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+
+    setCopiedOrderId(ord.order_id || ord.id);
+    if (showToast) {
+      showToast(`অর্ডার #${ord.order_id || ord.id} এর সম্পূর্ণ বিবরণ কপি হয়েছে!`);
+    }
+    setTimeout(() => {
+      setCopiedOrderId(null);
+    }, 2500);
+  };
 
   const filteredOrders = orders.filter((o) => {
     const q = searchTerm.toLowerCase();
@@ -214,6 +257,23 @@ export default function OrdersManager() {
                       <div style={{ display: 'inline-flex', gap: '6px' }}>
                         <button
                           className="adm-btn adm-btn-sm"
+                          style={{
+                            background: copiedOrderId === (ord.order_id || ord.id) ? '#ecfdf5' : '#fff7ed',
+                            color: copiedOrderId === (ord.order_id || ord.id) ? '#059669' : '#ea580c',
+                            borderColor: copiedOrderId === (ord.order_id || ord.id) ? '#a7f3d0' : '#fed7aa',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          onClick={() => copyOrderDetails(ord)}
+                          title="এক ক্লিকে সম্পূর্ণ অর্ডার কপি করুন"
+                        >
+                          {copiedOrderId === (ord.order_id || ord.id) ? <Check size={13} color="#059669" /> : <Copy size={13} />}
+                          <span>{copiedOrderId === (ord.order_id || ord.id) ? 'কপি হয়েছে' : 'কপি'}</span>
+                        </button>
+                        <button
+                          className="adm-btn adm-btn-sm"
                           onClick={() => setSelectedOrder(ord)}
                           title="সম্পূর্ণ অর্ডার দেখুন"
                         >
@@ -267,6 +327,37 @@ export default function OrdersManager() {
             </div>
 
             <div className="adm-card-body" style={{ fontSize: '13.5px', lineHeight: 1.6 }}>
+              {/* One-click Copy Button */}
+              <button
+                type="button"
+                className="adm-btn"
+                style={{
+                  width: '100%',
+                  background: copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? '#ecfdf5' : '#ea580c',
+                  color: copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? '#059669' : '#ffffff',
+                  borderColor: copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? '#a7f3d0' : '#ea580c',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  padding: '11px 16px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)'
+                }}
+                onClick={() => copyOrderDetails(selectedOrder)}
+              >
+                {copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? <Check size={16} /> : <Copy size={16} />}
+                <span>
+                  {copiedOrderId === (selectedOrder.order_id || selectedOrder.id)
+                    ? '✓ সম্পূর্ণ বিবরণ সফলভাবে কপি হয়েছে!'
+                    : '📋 এক ক্লিকে সম্পূর্ণ অর্ডার কপি করুন (কুরিয়ার / নোট)'}
+                </span>
+              </button>
+
               {/* Customer Box */}
               <div
                 style={{

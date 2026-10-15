@@ -2133,3 +2133,31 @@ a {
 .success-home-btn:active {
   transform: translateY(0);
 }
+
+.success-copy-btn {
+  width: 100%;
+  background: #fff8f3;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  font-size: 14.5px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.success-copy-btn:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.success-copy-btn:active {
+  transform: translateY(0);
+}

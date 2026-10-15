@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { Phone, Check, Package, ArrowLeft } from 'lucide-react';
+import { Phone, Check, Package, ArrowLeft, Copy } from 'lucide-react';
 import { useCms } from '../context/CmsContext';
 
 export default function OrderSuccessPage({ order, onReturnHome }) {
   const { siteSettings } = useCms();
+  const [copied, setCopied] = useState(false);
 
   // Trigger celebration confetti on mount
   useEffect(() => {
@@ -39,6 +40,33 @@ export default function OrderSuccessPage({ order, onReturnHome }) {
     : 'ঢাকা, বাংলাদেশ';
   const totalPrice = order?.total_price || order?.total || '750.00';
   const formattedPrice = typeof totalPrice === 'number' ? totalPrice.toFixed(2) : parseFloat(totalPrice).toFixed(2);
+
+  const handleCopyOrder = () => {
+    const formattedText = `📦 অর্ডারের বিস্তারিত ইনভয়েস:
+----------------------------------
+অর্ডার নম্বর: #${displayOrderId}
+তারিখ: ${formattedDate}
+কাস্টমার নাম: ${customerName}
+মোবাইল নম্বর: ${customerPhone}
+ডেলিভারি ঠিকানা: ${customerAddress}
+পেমেন্ট মেথড: Cash on delivery
+সর্বমোট মূল্য: ৳ ${formattedPrice}
+----------------------------------`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formattedText);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = formattedText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   return (
     <div className="success-page-shell">
@@ -119,6 +147,16 @@ export default function OrderSuccessPage({ order, onReturnHome }) {
                 <strong>কল করে কনফার্ম করবেন।</strong>
               </div>
             </div>
+
+            {/* One-click Copy Order Button */}
+            <button
+              type="button"
+              className="success-copy-btn"
+              onClick={handleCopyOrder}
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              <span>{copied ? '✓ সম্পূর্ণ বিবরণ কপি হয়েছে!' : '📋 এক ক্লিকে অর্ডার কপি করুন'}</span>
+            </button>
 
             {/* Return to Home CTA Button */}
             <button

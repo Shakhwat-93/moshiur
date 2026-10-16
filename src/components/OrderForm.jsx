@@ -58,6 +58,32 @@ export default function OrderForm({ selectedPackage, onSelectPackage, onOrderSuc
     setQuantity((prev) => Math.max(1, prev + delta));
   };
 
+  const convertBengaliToEnglishNumerals = (str) => {
+    if (!str) return '';
+    const bnNumerals = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    return str.replace(/[০-৯]/g, (match) => bnNumerals.indexOf(match));
+  };
+
+  const handlePhoneChange = (e) => {
+    const raw = e.target.value;
+    const converted = convertBengaliToEnglishNumerals(raw);
+    const digitsOnly = converted.replace(/\D/g, '');
+    const sanitized = digitsOnly.slice(0, 11);
+    setFormData((prev) => ({ ...prev, phone: sanitized }));
+  };
+
+  const handlePhoneKeyDown = (e) => {
+    if (
+      ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key) ||
+      ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()))
+    ) {
+      return;
+    }
+    if (!/[0-9০-৯]/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -239,7 +265,20 @@ export default function OrderForm({ selectedPackage, onSelectPackage, onOrderSuc
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="phone">মোবাইল নম্বর লিখুন *</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label htmlFor="phone" style={{ margin: 0 }}>মোবাইল নম্বর লিখুন *</label>
+                  {formData.phone && (
+                    <span style={{
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      color: formData.phone.length === 11 && /^01[3-9]/.test(formData.phone) ? '#059669' : '#e11d48'
+                    }}>
+                      {formData.phone.length === 11 && /^01[3-9]/.test(formData.phone)
+                        ? '✓ সঠিক ১১ ডিজিট'
+                        : `${formData.phone.length}/১১ ডিজিট`}
+                    </span>
+                  )}
+                </div>
                 <input
                   type="tel"
                   id="phone"
@@ -247,9 +286,13 @@ export default function OrderForm({ selectedPackage, onSelectPackage, onOrderSuc
                   className="form-control"
                   placeholder="যেমন: 017XXXXXXXX"
                   required
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={11}
                   value={formData.phone}
-                  onChange={handleInputChange}
-                  maxLength="11"
+                  onChange={handlePhoneChange}
+                  onKeyDown={handlePhoneKeyDown}
+                  autoComplete="tel"
                 />
               </div>
               <div className="form-group">

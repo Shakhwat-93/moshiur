@@ -69,29 +69,22 @@ export default function EasyStock() {
       <div className="easy-form-stack">
         {stockList.map((item, idx) => (
           <div key={item.id} className="easy-subcard">
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div className="easy-stock-item-row">
               <img
                 src={item.images?.[0] || '/images/IMG_7091.webp'}
                 alt={item.title}
-                style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                className="easy-stock-thumb"
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 700 }}>{item.title}</h3>
-                <div style={{ display: 'flex', gap: '12px', fontSize: '13px', color: '#6b7280' }}>
+              <div className="easy-stock-info">
+                <h3 className="easy-stock-title">{item.title}</h3>
+                <div className="easy-stock-meta">
                   <span>SKU: {item.sku}</span>
                   <span>মূল্য: ৳ {item.price}</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="easy-stock-item-actions">
                 <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    background: item.status === 'active' ? '#ecfdf5' : '#fef2f2',
-                    color: item.status === 'active' ? '#059669' : '#dc2626'
-                  }}
+                  className={`easy-stock-status-pill ${item.status === 'active' ? 'active' : 'draft'}`}
                 >
                   {item.status === 'active' ? 'In Stock' : 'Out of Stock'}
                 </span>

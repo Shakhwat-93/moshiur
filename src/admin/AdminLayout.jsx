@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutGrid,
   Sliders,
@@ -10,7 +10,8 @@ import {
   LogOut,
   ArrowLeft,
   Menu,
-  X
+  X,
+  Store
 } from 'lucide-react';
 import { useCms } from '../context/CmsContext';
 import './admin.css';
@@ -19,6 +20,18 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
   const { siteSettings, orders, fetchData, showToast } = useCms();
   const [refreshing, setRefreshing] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Prevent background scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   const pendingCount = orders?.filter((o) => o.status === 'pending')?.length || 0;
 
@@ -51,7 +64,7 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
 
   return (
     <div className="easy-admin-root">
-      {/* Top Header matching reference */}
+      {/* Top Header */}
       <header className="easy-admin-header">
         <div className="easy-header-container">
           <div className="easy-header-left">
@@ -59,6 +72,7 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
               type="button"
               className="easy-back-link"
               onClick={onNavigateStore}
+              title="Return to public storefront"
             >
               <ArrowLeft size={15} />
               <span>Back to landing page</span>
@@ -69,14 +83,16 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
           </div>
 
           <div className="easy-header-right">
-            {/* Mobile menu toggle */}
+            {/* Mobile / Tablet Menu Button (visible on <= 1023px) */}
             <button
               type="button"
               className="easy-mobile-menu-btn"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open navigation menu"
+              title="Open Navigation Menu"
             >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              <Menu size={20} />
+              <span className="easy-menu-text">Menu</span>
             </button>
 
             {/* Refresh Button */}
@@ -85,19 +101,21 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
               className="easy-refresh-btn"
               onClick={handleRefresh}
               disabled={refreshing}
+              title="Refresh store and order data"
             >
               <RotateCw size={15} className={refreshing ? 'easy-spinning' : ''} />
-              <span>Refresh</span>
+              <span className="easy-btn-text">Refresh</span>
             </button>
 
-            {/* Logout Button */}
+            {/* Logout / Exit Button */}
             <button
               type="button"
               className="easy-logout-btn"
               onClick={onNavigateStore}
+              title="Exit admin and view store"
             >
               <LogOut size={15} />
-              <span>Logout</span>
+              <span className="easy-btn-text">Logout</span>
             </button>
           </div>
         </div>
@@ -105,16 +123,37 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
 
       {/* Main Content Area */}
       <div className="easy-main-container">
-        {/* Mobile menu drawer backdrop */}
+        {/* Mobile / Tablet Drawer Backdrop */}
         {mobileMenuOpen && (
           <div
             className="easy-drawer-backdrop"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
         )}
 
-        {/* Floating Sidebar Card */}
-        <aside className={`easy-sidebar-card ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        {/* Floating Sidebar (Desktop) / Slide-over Drawer (Tablet & Mobile) */}
+        <aside
+          className={`easy-sidebar-card ${mobileMenuOpen ? 'mobile-open' : ''}`}
+          aria-label="Admin Navigation"
+        >
+          {/* Drawer Header (Mobile/Tablet Only) */}
+          <div className="easy-drawer-header">
+            <div className="easy-drawer-brand">
+              <Store size={18} color="#ea580c" />
+              <span>{siteSettings?.store_name || 'Herbheez'} Admin</span>
+            </div>
+            <button
+              type="button"
+              className="easy-drawer-close"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Navigation Items */}
           <nav className="easy-nav-list">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -135,6 +174,18 @@ export default function AdminLayout({ activeTab, setActiveTab, onNavigateStore, 
               );
             })}
           </nav>
+
+          {/* Drawer Footer with Store Link */}
+          <div className="easy-drawer-footer">
+            <button
+              type="button"
+              className="easy-drawer-store-btn"
+              onClick={onNavigateStore}
+            >
+              <ArrowLeft size={14} />
+              <span>View Landing Page</span>
+            </button>
+          </div>
         </aside>
 
         {/* Dynamic Page Content */}

@@ -16,7 +16,10 @@ import {
   Check,
   ShieldCheck,
   AlertTriangle,
-  RotateCw
+  RotateCw,
+  Package,
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 import { useCms } from '../../context/CmsContext';
 import { normalizeBdPhone } from '../../lib/phoneNormalizer';
@@ -87,6 +90,7 @@ export default function OrdersManager() {
     }
   };
 
+  // Clean 4-line courier copy
   const copyOrderDetails = (ord) => {
     if (!ord) return;
 
@@ -149,8 +153,8 @@ export default function OrdersManager() {
     }
   };
 
-  // Render Courier Ratio pill for table row
-  const renderCourierBadge = (ord) => {
+  // Render Courier Ratio pill for table row / mobile card
+  const renderCourierBadge = (ord, isMobile = false) => {
     const norm = normalizeBdPhone(ord.phone);
     const check = courierChecks[norm];
 
@@ -158,8 +162,7 @@ export default function OrdersManager() {
       return (
         <button
           type="button"
-          className="adm-btn adm-btn-sm"
-          style={{ fontSize: '11px', padding: '3px 8px', borderColor: '#fed7aa', color: '#c2410c' }}
+          className="adm-btn adm-btn-sm adm-courier-probe-btn"
           onClick={(e) => {
             e.stopPropagation();
             handleTriggerCourierCheck(ord);
@@ -167,7 +170,12 @@ export default function OrdersManager() {
           disabled={checkingPhone === ord.phone}
           title="BD Courier API দিয়ে গ্রাহকের ডেলিভারি হিস্ট্রি চেক করুন"
         >
-          {checkingPhone === ord.phone ? 'চেক হচ্ছে...' : '🔍 চেক করুন'}
+          {checkingPhone === ord.phone ? (
+            <RotateCw size={12} className="easy-spinning" />
+          ) : (
+            <ShieldCheck size={12} />
+          )}
+          <span>{checkingPhone === ord.phone ? 'চেক হচ্ছে...' : 'কুরিয়ার চেক'}</span>
         </button>
       );
     }
@@ -182,7 +190,13 @@ export default function OrdersManager() {
         return (
           <span
             className="adm-badge"
-            style={{ background: '#f1f5f9', color: '#475569', fontSize: '11.5px', whiteSpace: 'nowrap' }}
+            style={{
+              background: '#f1f5f9',
+              color: '#475569',
+              fontSize: '11.5px',
+              whiteSpace: 'nowrap',
+              border: '1px solid #cbd5e1'
+            }}
             title="নতুন গ্রাহক (পূর্ববর্তী পার্সেল নেই)"
           >
             নতুন গ্রাহক (০)
@@ -202,6 +216,8 @@ export default function OrdersManager() {
             background: bg,
             color: col,
             borderColor: col,
+            borderWidth: '1px',
+            borderStyle: 'solid',
             fontWeight: 700,
             fontSize: '11.5px',
             whiteSpace: 'nowrap'
@@ -215,15 +231,22 @@ export default function OrdersManager() {
 
     if (check.status === 'failed' || check.status === 'unknown') {
       return (
-        <span className="adm-badge adm-badge-danger" style={{ fontSize: '11px' }} title={check.error || 'Check failed'}>
-          ব্যর্থ / অজানা
+        <span
+          className="adm-badge adm-badge-danger"
+          style={{ fontSize: '11px', whiteSpace: 'nowrap' }}
+          title={check.error || 'Check failed'}
+        >
+          চেক ব্যর্থ
         </span>
       );
     }
 
     if (check.status === 'pending') {
       return (
-        <span className="adm-badge adm-badge-warning" style={{ fontSize: '11px' }}>
+        <span
+          className="adm-badge adm-badge-warning"
+          style={{ fontSize: '11px', whiteSpace: 'nowrap' }}
+        >
           চেক হচ্ছে...
         </span>
       );
@@ -244,32 +267,24 @@ export default function OrdersManager() {
     : null;
 
   return (
-    <div>
+    <div className="adm-orders-page-shell">
       {/* Top Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}
-      >
+      <div className="adm-page-header-wrap">
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>
-            অর্ডার ব্যবস্থাপনা ({orders.length})
+          <h2 className="adm-page-main-heading">
+            অর্ডার ব্যবস্থাপনা <span className="adm-count-pill">({orders.length})</span>
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--adm-text-subdued)', margin: '2px 0 0 0' }}>
+          <p className="adm-page-sub-heading">
             ক্যাশ অন ডেলিভারি, কাস্টমার কুরিয়ার স্কোর ও ওয়েবসাইট থেকে আসা সমস্ত অর্ডারের বিবরণ
           </p>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="adm-card" style={{ marginBottom: '16px' }}>
+      {/* Filter Tabs & Search Card */}
+      <div className="adm-card adm-filter-card">
         <div className="adm-card-body" style={{ padding: '12px 16px' }}>
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+          {/* Scrollable Filter Tabs */}
+          <div className="adm-filter-tabs-scroll">
             {[
               { id: 'all', label: `সব (${orders.length})` },
               { id: 'pending', label: `অপেক্ষমাণ (${orders.filter((o) => o.status === 'pending').length})` },
@@ -280,9 +295,9 @@ export default function OrdersManager() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                className={`adm-btn adm-btn-sm ${statusTab === tab.id ? 'adm-btn-primary' : ''}`}
+                type="button"
+                className={`adm-filter-tab-btn ${statusTab === tab.id ? 'active' : ''}`}
                 onClick={() => setStatusTab(tab.id)}
-                style={{ whiteSpace: 'nowrap' }}
               >
                 {tab.label}
               </button>
@@ -290,22 +305,12 @@ export default function OrdersManager() {
           </div>
 
           {/* Search Field */}
-          <div style={{ position: 'relative', marginTop: '12px' }}>
-            <Search
-              size={16}
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--adm-text-subdued)'
-              }}
-            />
+          <div className="adm-search-input-wrap">
+            <Search size={16} className="adm-search-icon" />
             <input
               type="text"
               placeholder="অর্ডার আইডি, গ্রাহকের নাম, মোবাইল নম্বর বা ঠিকানা দিয়ে খুঁজুন..."
-              className="adm-input"
-              style={{ paddingLeft: '36px' }}
+              className="adm-input adm-search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -313,207 +318,311 @@ export default function OrdersManager() {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="adm-card">
+      {/* Orders Container: Desktop Table (>= 768px) & Mobile Order Cards (< 768px) */}
+      <div className="adm-card adm-orders-content-card">
         {filteredOrders.length === 0 ? (
-          <div className="adm-card-body" style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <p style={{ color: 'var(--adm-text-subdued)', margin: 0 }}>কোনো অর্ডার পাওয়া যায়নি।</p>
+          <div className="adm-empty-state-box">
+            <p>কোনো অর্ডার পাওয়া যায়নি।</p>
           </div>
         ) : (
-          <div className="adm-table-responsive">
-            <table className="adm-table">
-              <thead>
-                <tr>
-                  <th>অর্ডার আইডি</th>
-                  <th>তারিখ</th>
-                  <th>গ্রাহকের তথ্য</th>
-                  <th>কুরিয়ার হিস্ট্রি</th>
-                  <th>প্যাকেজ / পণ্য</th>
-                  <th>টোটাল</th>
-                  <th>স্ট্যাটাস</th>
-                  <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map((ord) => (
-                  <tr key={ord.order_id}>
-                    <td data-label="অর্ডার আইডি" style={{ fontWeight: 600, color: '#008060' }}>
-                      {ord.order_id}
-                    </td>
+          <>
+            {/* ============================================================ */}
+            {/* 1. DESKTOP & LAPTOP TABLE (>= 768px)                          */}
+            {/* ============================================================ */}
+            <div className="adm-table-wrap adm-desktop-table">
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th className="th-order-id">অর্ডার আইডি</th>
+                    <th className="th-date">তারিখ</th>
+                    <th className="th-customer">গ্রাহকের তথ্য</th>
+                    <th className="th-courier">কুরিয়ার স্কোর</th>
+                    <th className="th-product">প্যাকেজ / পণ্য</th>
+                    <th className="th-total">টোটাল</th>
+                    <th className="th-status">স্ট্যাটাস</th>
+                    <th className="th-actions" style={{ textAlign: 'right' }}>অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((ord) => (
+                    <tr key={ord.order_id || ord.id}>
+                      {/* Order ID */}
+                      <td className="td-order-id">
+                        <span className="adm-id-text">{ord.order_id}</span>
+                      </td>
 
-                    <td data-label="তারিখ" style={{ fontSize: '12.5px', color: 'var(--adm-text-subdued)' }}>
-                      {ord.created_at ? new Date(ord.created_at).toLocaleDateString('bn-BD') : 'N/A'}
-                    </td>
+                      {/* Date */}
+                      <td className="td-date">
+                        {ord.created_at
+                          ? new Date(ord.created_at).toLocaleDateString('bn-BD', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })
+                          : 'N/A'}
+                      </td>
 
-                    <td data-label="গ্রাহকের তথ্য">
-                      <div style={{ fontWeight: 600 }}>{ord.name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--adm-text-subdued)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Phone size={12} />
-                        <a href={`tel:${ord.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                          {ord.phone}
-                        </a>
+                      {/* Customer Info (Natural Multi-line Bengali) */}
+                      <td className="td-customer">
+                        <div className="adm-cust-name">{ord.name}</div>
+                        <div className="adm-cust-phone">
+                          <Phone size={12} />
+                          <a href={`tel:${ord.phone}`}>{ord.phone}</a>
+                        </div>
+                        <div className="adm-cust-address" title={`${ord.address}, ${ord.area || ''}`}>
+                          {ord.address}{ord.area ? `, ${ord.area}` : ''}
+                        </div>
+                      </td>
+
+                      {/* Courier Score */}
+                      <td className="td-courier">
+                        {renderCourierBadge(ord)}
+                      </td>
+
+                      {/* Product Package */}
+                      <td className="td-product">
+                        <div className="adm-pkg-name">{ord.package_name || 'জিরো এলার্জি'}</div>
+                        <div className="adm-pkg-qty">পরিমাণ: {ord.quantity || 1} টি</div>
+                      </td>
+
+                      {/* Total COD Amount */}
+                      <td className="td-total">
+                        <div className="adm-total-amt">৳ {ord.total_price || ord.total || 0}</div>
+                        <div className="adm-cod-badge">ক্যাশ অন ডেলিভারি</div>
+                      </td>
+
+                      {/* Status Dropdown */}
+                      <td className="td-status">
+                        <select
+                          className={`adm-status-select ${ord.status || 'pending'}`}
+                          value={ord.status || 'pending'}
+                          onChange={(e) => updateOrderStatus(ord.order_id, e.target.value)}
+                        >
+                          <option value="pending">অপেক্ষমাণ (Pending)</option>
+                          <option value="confirmed">কনফার্মড (Confirmed)</option>
+                          <option value="processing">প্রক্রিয়াধীন (Processing)</option>
+                          <option value="shipped">কুরিয়ারে পাঠানো (Shipped)</option>
+                          <option value="delivered">ডেলিভার্ড (Delivered)</option>
+                          <option value="cancelled">বাতিল (Cancelled)</option>
+                        </select>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="td-actions" style={{ textAlign: 'right' }}>
+                        <div className="adm-actions-group">
+                          <button
+                            type="button"
+                            className="adm-btn adm-btn-sm adm-btn-copy"
+                            onClick={() => copyOrderDetails(ord)}
+                            title="১-ক্লিকে কুরিয়ার ফরম্যাটে কপি করুন"
+                          >
+                            {copiedOrderId === (ord.order_id || ord.id) ? (
+                              <Check size={13} color="#059669" />
+                            ) : (
+                              <Copy size={13} />
+                            )}
+                            <span>{copiedOrderId === (ord.order_id || ord.id) ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="adm-btn adm-btn-sm"
+                            onClick={() => setSelectedOrder(ord)}
+                            title="সম্পূর্ণ বিবরণ দেখুন"
+                          >
+                            <Eye size={13} />
+                            <span>বিস্তারিত</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="adm-btn adm-btn-sm adm-btn-danger"
+                            onClick={() => {
+                              if (window.confirm('আপনি কি নিশ্চিত যে এই অর্ডারটি মুছে ফেলতে চান?')) {
+                                deleteOrder(ord.order_id);
+                              }
+                            }}
+                            title="মুছে ফেলুন"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ============================================================ */}
+            {/* 2. MOBILE ORDER CARDS (< 768px)                               */}
+            {/* ============================================================ */}
+            <div className="adm-mobile-cards-list">
+              {filteredOrders.map((ord) => (
+                <div key={ord.order_id || ord.id} className="adm-order-card">
+                  {/* Card Header: Order ID + Date + Status Select */}
+                  <div className="adm-card-top-row">
+                    <div>
+                      <div className="adm-card-order-id">#{ord.order_id}</div>
+                      <div className="adm-card-date">
+                        {ord.created_at
+                          ? new Date(ord.created_at).toLocaleDateString('bn-BD', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })
+                          : 'N/A'}
                       </div>
-                      <div style={{ fontSize: '11.5px', color: 'var(--adm-text-subdued)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {ord.address}, {ord.area}
-                      </div>
-                    </td>
+                    </div>
 
-                    {/* Courier Ratio Column */}
-                    <td data-label="কুরিয়ার হিস্ট্রি">
-                      {renderCourierBadge(ord)}
-                    </td>
-
-                    <td data-label="প্যাকেজ">
-                      <div style={{ fontSize: '13px', fontWeight: 500 }}>{ord.package_name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--adm-text-subdued)' }}>
-                        পরিমাণ: {ord.quantity || 1} টি
-                      </div>
-                    </td>
-
-                    <td data-label="টোটাল">
-                      <div style={{ fontWeight: 700, color: '#111827' }}>৳ {ord.total_price}</div>
-                      <div style={{ fontSize: '11px', color: '#008060' }}>ক্যাশ অন ডেলিভারি</div>
-                    </td>
-
-                    <td data-label="স্ট্যাটাস">
+                    <div className="adm-card-status-col">
                       <select
-                        className="adm-select"
-                        style={{
-                          fontSize: '12px',
-                          padding: '4px 8px',
-                          width: 'auto',
-                          background:
-                            ord.status === 'pending'
-                              ? '#fef2f2'
-                              : ord.status === 'delivered'
-                              ? '#ecfdf5'
-                              : '#eff6ff',
-                          borderColor:
-                            ord.status === 'pending'
-                              ? '#f87171'
-                              : ord.status === 'delivered'
-                              ? '#34d399'
-                              : '#60a5fa'
-                        }}
+                        className={`adm-status-select mobile ${ord.status || 'pending'}`}
                         value={ord.status || 'pending'}
                         onChange={(e) => updateOrderStatus(ord.order_id, e.target.value)}
                       >
                         <option value="pending">অপেক্ষমাণ (Pending)</option>
-                        <option value="confirmed">কনফার্মড (Confirmed)</option>
-                        <option value="processing">প্রক্রিয়াধীন (Processing)</option>
-                        <option value="shipped">কুরিয়ারে পাঠানো (Shipped)</option>
-                        <option value="delivered">ডেলিভার্ড (Delivered)</option>
-                        <option value="cancelled">বাতিল (Cancelled)</option>
+                        <option value="confirmed">কনফার্মড</option>
+                        <option value="processing">প্রক্রিয়াধীন</option>
+                        <option value="shipped">কুরিয়ারে পাঠানো</option>
+                        <option value="delivered">ডেলিভার্ড</option>
+                        <option value="cancelled">বাতিল</option>
                       </select>
-                    </td>
+                    </div>
+                  </div>
 
-                    <td data-label="অ্যাকশন" style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '6px' }}>
-                        <button
-                          className="adm-btn adm-btn-sm"
-                          style={{
-                            background: copiedOrderId === (ord.order_id || ord.id) ? '#ecfdf5' : '#fff7ed',
-                            color: copiedOrderId === (ord.order_id || ord.id) ? '#059669' : '#ea580c',
-                            borderColor: copiedOrderId === (ord.order_id || ord.id) ? '#a7f3d0' : '#fed7aa',
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                          onClick={() => copyOrderDetails(ord)}
-                          title="এক ক্লিকে সম্পূর্ণ অর্ডার কপি করুন"
-                        >
-                          {copiedOrderId === (ord.order_id || ord.id) ? <Check size={13} color="#059669" /> : <Copy size={13} />}
-                          <span>{copiedOrderId === (ord.order_id || ord.id) ? 'কপি হয়েছে' : 'কপি'}</span>
-                        </button>
-                        <button
-                          className="adm-btn adm-btn-sm"
-                          onClick={() => setSelectedOrder(ord)}
-                          title="সম্পূর্ণ অর্ডার দেখুন"
-                        >
-                          <Eye size={13} />
-                          <span>বিস্তারিত</span>
-                        </button>
-                        <button
-                          className="adm-btn adm-btn-sm adm-btn-danger"
-                          onClick={() => {
-                            if (window.confirm('আপনি কি নিশ্চিত যে এই অর্ডারটি মুছে ফেলতে চান?')) {
-                              deleteOrder(ord.order_id);
-                            }
-                          }}
-                          title="মুছে ফেলুন"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                  {/* Customer Information Block */}
+                  <div className="adm-card-customer-block">
+                    <div className="adm-card-cust-name">{ord.name}</div>
+                    <div className="adm-card-phone-row">
+                      <a href={`tel:${ord.phone}`} className="adm-card-phone-link">
+                        <Phone size={13} />
+                        <span>{ord.phone}</span>
+                      </a>
+                      <div className="adm-card-courier-wrap">
+                        {renderCourierBadge(ord, true)}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    <div className="adm-card-address">
+                      <MapPin size={12} className="adm-pin-icon" />
+                      <span>{ord.address}{ord.area ? `, ${ord.area}` : ''}</span>
+                    </div>
+                  </div>
+
+                  {/* Product & Price Summary Block */}
+                  <div className="adm-card-product-summary">
+                    <div className="adm-card-pkg-info">
+                      <Package size={14} color="#ea580c" />
+                      <div className="adm-card-pkg-text">
+                        <strong>{ord.package_name || 'জিরো এলার্জি'}</strong>
+                        <span className="adm-card-qty-badge">× {ord.quantity || 1} টি</span>
+                      </div>
+                    </div>
+                    <div className="adm-card-price-info">
+                      <div className="adm-card-price">৳ {ord.total_price || ord.total || 0}</div>
+                      <div className="adm-card-cod-tag">ক্যাশ অন ডেলিভারি</div>
+                    </div>
+                  </div>
+
+                  {/* Card Action Buttons (44px touch targets) */}
+                  <div className="adm-card-actions-grid">
+                    <button
+                      type="button"
+                      className="adm-btn adm-card-btn copy"
+                      onClick={() => copyOrderDetails(ord)}
+                      title="কুরিয়ার ফরম্যাটে কপি"
+                    >
+                      {copiedOrderId === (ord.order_id || ord.id) ? (
+                        <Check size={15} color="#059669" />
+                      ) : (
+                        <Copy size={15} />
+                      )}
+                      <span>{copiedOrderId === (ord.order_id || ord.id) ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="adm-btn adm-card-btn view"
+                      onClick={() => setSelectedOrder(ord)}
+                      title="অর্ডারের সম্পূর্ণ বিবরণ দেখুন"
+                    >
+                      <Eye size={15} />
+                      <span>বিস্তারিত</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="adm-btn adm-card-btn delete"
+                      onClick={() => {
+                        if (window.confirm('আপনি কি নিশ্চিত যে এই অর্ডারটি মুছে ফেলতে চান?')) {
+                          deleteOrder(ord.order_id);
+                        }
+                      }}
+                      title="অর্ডার মুছে ফেলুন"
+                    >
+                      <Trash2 size={15} />
+                      <span>মুছুন</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Order Details Modal Sheet */}
+      {/* ============================================================ */}
+      {/* 3. ORDER DETAILS MODAL SHEET (FULLY RESPONSIVE)               */}
+      {/* ============================================================ */}
       {selectedOrder && (
         <div
           className="adm-backdrop"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setSelectedOrder(null)}
+          aria-modal="true"
+          role="dialog"
         >
           <div
-            className="adm-card"
-            style={{ width: '92%', maxWidth: '560px', margin: 0, maxHeight: '90vh', overflowY: 'auto' }}
+            className="adm-modal-sheet"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="adm-card-header">
-              <div>
-                <h3 className="adm-card-title">অর্ডার ডিটেইলস: {selectedOrder.order_id}</h3>
+            {/* Modal Sticky Header */}
+            <div className="adm-modal-header">
+              <div className="adm-modal-header-text">
+                <h3 className="adm-modal-title">অর্ডার ডিটেইলস: #{selectedOrder.order_id}</h3>
                 <div style={{ marginTop: '4px' }}>{getStatusBadge(selectedOrder.status)}</div>
               </div>
               <button
-                className="adm-btn adm-btn-sm"
+                type="button"
+                className="adm-modal-close-btn"
                 onClick={() => setSelectedOrder(null)}
+                aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
-            <div className="adm-card-body" style={{ fontSize: '13.5px', lineHeight: 1.6 }}>
-              {/* One-click Copy Button */}
+            {/* Modal Scrollable Body */}
+            <div className="adm-modal-body">
+              {/* One-click Courier Copy Button */}
               <button
                 type="button"
-                className="adm-btn"
-                style={{
-                  width: '100%',
-                  background: copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? '#ecfdf5' : '#ea580c',
-                  color: copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? '#059669' : '#ffffff',
-                  borderColor: copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? '#a7f3d0' : '#ea580c',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  padding: '11px 16px',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)'
-                }}
+                className="adm-btn adm-modal-copy-btn"
                 onClick={() => copyOrderDetails(selectedOrder)}
               >
-                {copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? <Check size={16} /> : <Copy size={16} />}
+                {copiedOrderId === (selectedOrder.order_id || selectedOrder.id) ? (
+                  <Check size={18} />
+                ) : (
+                  <Copy size={18} />
+                )}
                 <span>
                   {copiedOrderId === (selectedOrder.order_id || selectedOrder.id)
                     ? '✓ সম্পূর্ণ বিবরণ সফলভাবে কপি হয়েছে!'
-                    : '📋 এক ক্লিকে সম্পূর্ণ অর্ডার কপি করুন (কুরিয়ার / নোট)'}
+                    : '📋 এক ক্লিকে অর্ডার কপি করুন (কুরিয়ার ফরম্যাট)'}
                 </span>
               </button>
 
-              {/* BD Courier Verification Card inside Admin Modal */}
-              <div style={{ marginBottom: '16px' }}>
+              {/* BD Courier Verification Card */}
+              <div className="adm-modal-section">
                 <CourierStatsCard
                   data={selectedCheck?.data}
                   loading={checkingPhone === selectedOrder.phone}
@@ -526,19 +635,11 @@ export default function OrdersManager() {
                 {!selectedCheck && (
                   <button
                     type="button"
-                    className="adm-btn adm-btn-sm"
-                    style={{
-                      width: '100%',
-                      background: '#fffaf5',
-                      borderColor: '#fed7aa',
-                      color: '#ea580c',
-                      fontWeight: 600,
-                      marginTop: '6px'
-                    }}
+                    className="adm-btn adm-modal-courier-btn"
                     onClick={() => handleTriggerCourierCheck(selectedOrder)}
                     disabled={checkingPhone === selectedOrder.phone}
                   >
-                    <ShieldCheck size={14} />
+                    <ShieldCheck size={15} />
                     <span>{checkingPhone === selectedOrder.phone ? 'যাচাই করা হচ্ছে...' : '🔍 BD Courier দিয়ে ডেলিভারি হিস্ট্রি চেক করুন'}</span>
                   </button>
                 )}
@@ -546,31 +647,15 @@ export default function OrdersManager() {
 
               {/* Multiple Orders with Same Phone Indicator */}
               {samePhoneOrders.length > 1 && (
-                <div
-                  style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    marginBottom: '16px',
-                    fontSize: '12px',
-                    color: '#166534'
-                  }}
-                >
-                  <div style={{ fontWeight: 700, marginBottom: '4px' }}>
-                    🔄 একই গ্রাহক নম্বরে মোট {samePhoneOrders.length} টি অর্ডার রয়েছে (ক্যাশ রেজাল্ট শেয়ার্ড):
+                <div className="adm-modal-repeat-card">
+                  <div className="adm-repeat-title">
+                    🔄 একই গ্রাহক নম্বরে মোট {samePhoneOrders.length} টি অর্ডার পাওয়া গেছে:
                   </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <div className="adm-repeat-chips">
                     {samePhoneOrders.map((o) => (
                       <span
                         key={o.order_id}
-                        style={{
-                          background: o.order_id === selectedOrder.order_id ? '#dcfce7' : '#ffffff',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid #86efac',
-                          fontWeight: o.order_id === selectedOrder.order_id ? 700 : 500
-                        }}
+                        className={`adm-repeat-chip ${o.order_id === selectedOrder.order_id ? 'current' : ''}`}
                       >
                         #{o.order_id} ({o.status || 'pending'})
                       </span>
@@ -580,64 +665,58 @@ export default function OrdersManager() {
               )}
 
               {/* Customer Box */}
-              <div
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid var(--adm-border)',
-                  borderRadius: '8px',
-                  padding: '14px',
-                  marginBottom: '16px'
-                }}
-              >
-                <div style={{ fontWeight: 600, color: '#008060', marginBottom: '4px' }}>
-                  গ্রাহকের যোগাযোগের ঠিকানা:
+              <div className="adm-modal-info-card">
+                <div className="adm-modal-info-heading">গ্রাহকের যোগাযোগের ঠিকানা:</div>
+                <div className="adm-modal-info-row">
+                  <span className="lbl">নাম:</span>
+                  <span className="val bold">{selectedOrder.name}</span>
                 </div>
-                <div><strong>নাম:</strong> {selectedOrder.name}</div>
-                <div>
-                  <strong>মোবাইল:</strong>{' '}
-                  <a href={`tel:${selectedOrder.phone}`} style={{ color: '#008060', fontWeight: 600 }}>
-                    {selectedOrder.phone}
-                  </a>
+                <div className="adm-modal-info-row">
+                  <span className="lbl">মোবাইল:</span>
+                  <span className="val">
+                    <a href={`tel:${selectedOrder.phone}`} className="adm-phone-link">
+                      <Phone size={13} />
+                      {selectedOrder.phone}
+                    </a>
+                  </span>
                 </div>
-                <div><strong>ঠিকানা:</strong> {selectedOrder.address}</div>
-                <div><strong>ডেলিভারি এরিয়া:</strong> {selectedOrder.area}</div>
+                <div className="adm-modal-info-row">
+                  <span className="lbl">ঠিকানা:</span>
+                  <span className="val">{selectedOrder.address}</span>
+                </div>
+                <div className="adm-modal-info-row">
+                  <span className="lbl">এরিয়া:</span>
+                  <span className="val">{selectedOrder.area || 'ঢাকার বাইরে'}</span>
+                </div>
               </div>
 
               {/* Order Items & Breakdown */}
-              <div
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid var(--adm-border)',
-                  borderRadius: '8px',
-                  padding: '14px',
-                  marginBottom: '16px'
-                }}
-              >
-                <div style={{ fontWeight: 600, marginBottom: '8px' }}>অর্ডারের বিবরণ:</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span>{selectedOrder.package_name}</span>
-                  <span>× {selectedOrder.quantity || 1}</span>
+              <div className="adm-modal-info-card">
+                <div className="adm-modal-info-heading">অর্ডারের বিবরণ:</div>
+                <div className="adm-modal-calc-row">
+                  <span>{selectedOrder.package_name || 'জিরো এলার্জি'}</span>
+                  <span className="bold">× {selectedOrder.quantity || 1} টি</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div className="adm-modal-calc-row">
                   <span>একক মূল্য:</span>
                   <span>৳ {selectedOrder.unit_price}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: '#008060' }}>
+                <div className="adm-modal-calc-row free">
                   <span>ডেলিভারি চার্জ:</span>
                   <span>ফ্রি (৳০)</span>
                 </div>
-                <hr style={{ border: 'none', borderTop: '1px solid var(--adm-border)', margin: '8px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '15px' }}>
+                <div className="adm-modal-calc-divider"></div>
+                <div className="adm-modal-calc-total">
                   <span>সর্বমোট বিল:</span>
                   <span>৳ {selectedOrder.total_price}</span>
                 </div>
               </div>
 
               {/* Status Update Quick Buttons */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="adm-modal-status-grid">
                 <button
-                  className="adm-btn adm-btn-sm"
-                  style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }}
+                  type="button"
+                  className="adm-btn adm-modal-status-btn confirmed"
                   onClick={() => {
                     updateOrderStatus(selectedOrder.order_id, 'confirmed');
                     setSelectedOrder((prev) => ({ ...prev, status: 'confirmed' }));
@@ -646,8 +725,8 @@ export default function OrdersManager() {
                   ✓ কনফার্ম করুন
                 </button>
                 <button
-                  className="adm-btn adm-btn-sm"
-                  style={{ background: '#eff6ff', color: '#1e40af', borderColor: '#bfdbfe' }}
+                  type="button"
+                  className="adm-btn adm-modal-status-btn shipped"
                   onClick={() => {
                     updateOrderStatus(selectedOrder.order_id, 'shipped');
                     setSelectedOrder((prev) => ({ ...prev, status: 'shipped' }));
@@ -656,8 +735,8 @@ export default function OrdersManager() {
                   🚚 কুরিয়ারে পাঠান
                 </button>
                 <button
-                  className="adm-btn adm-btn-sm"
-                  style={{ background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' }}
+                  type="button"
+                  className="adm-btn adm-modal-status-btn delivered"
                   onClick={() => {
                     updateOrderStatus(selectedOrder.order_id, 'delivered');
                     setSelectedOrder((prev) => ({ ...prev, status: 'delivered' }));
@@ -666,8 +745,8 @@ export default function OrdersManager() {
                   🎉 ডেলিভার্ড
                 </button>
                 <button
-                  className="adm-btn adm-btn-sm"
-                  style={{ background: '#fef2f2', color: '#991b1b', borderColor: '#fecaca' }}
+                  type="button"
+                  className="adm-btn adm-modal-status-btn cancelled"
                   onClick={() => {
                     updateOrderStatus(selectedOrder.order_id, 'cancelled');
                     setSelectedOrder((prev) => ({ ...prev, status: 'cancelled' }));

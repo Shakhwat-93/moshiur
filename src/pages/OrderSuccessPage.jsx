@@ -42,16 +42,13 @@ export default function OrderSuccessPage({ order, onReturnHome }) {
   const formattedPrice = typeof totalPrice === 'number' ? totalPrice.toFixed(2) : parseFloat(totalPrice).toFixed(2);
 
   const handleCopyOrder = () => {
-    const formattedText = `📦 অর্ডারের বিস্তারিত ইনভয়েস:
-----------------------------------
-অর্ডার নম্বর: #${displayOrderId}
-তারিখ: ${formattedDate}
-কাস্টমার নাম: ${customerName}
-মোবাইল নম্বর: ${customerPhone}
-ডেলিভারি ঠিকানা: ${customerAddress}
-পেমেন্ট মেথড: Cash on delivery
-সর্বমোট মূল্য: ৳ ${formattedPrice}
-----------------------------------`;
+    const name = (order?.name || customerName || '').trim();
+    const address = (order?.address || customerAddress || '').trim();
+    const phone = (order?.phone || customerPhone || '').trim();
+    const qty = order?.quantity || 1;
+    const price = Math.round(Number(order?.total_price || order?.total || totalPrice || 0));
+
+    const formattedText = `${name}\n${address}\n${phone}\n${qty} packet = ${price} taka`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(formattedText);

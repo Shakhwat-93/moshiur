@@ -27,22 +27,13 @@ export default function OrdersManager() {
   const copyOrderDetails = (ord) => {
     if (!ord) return;
 
-    const dateStr = ord.created_at
-      ? new Date(ord.created_at).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' })
-      : new Date().toLocaleDateString('bn-BD');
+    const name = (ord.name || '').trim();
+    const address = (ord.address || '').trim();
+    const phone = (ord.phone || '').trim();
+    const qty = ord.quantity || 1;
+    const price = Math.round(Number(ord.total_price || ord.total || 0));
 
-    const formattedText = `📦 অর্ডারের বিস্তারিত বিবরণ:
-----------------------------------
-অর্ডার আইডি: #${ord.order_id || ord.id}
-তারিখ: ${dateStr}
-কাস্টমার নাম: ${ord.name || 'N/A'}
-মোবাইল নম্বর: ${ord.phone || 'N/A'}
-ডেলিভারি ঠিকানা: ${ord.address || 'N/A'}${ord.area ? `, ${ord.area}` : ''}
-পণ্য/প্যাকেজ: ${ord.package_name || 'জিরো এলার্জি'}
-পরিমাণ: ${ord.quantity || 1} টি
-সর্বমোট মূল্য: ৳ ${ord.total_price || ord.total || 0} (ক্যাশ অন ডেলিভারি)
-স্ট্যাটাস: ${ord.status || 'pending'}
-----------------------------------`;
+    const formattedText = `${name}\n${address}\n${phone}\n${qty} packet = ${price} taka`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(formattedText);
@@ -57,7 +48,7 @@ export default function OrdersManager() {
 
     setCopiedOrderId(ord.order_id || ord.id);
     if (showToast) {
-      showToast(`অর্ডার #${ord.order_id || ord.id} এর সম্পূর্ণ বিবরণ কপি হয়েছে!`);
+      showToast(`অর্ডার কপি হয়েছে!`);
     }
     setTimeout(() => {
       setCopiedOrderId(null);

@@ -20,6 +20,7 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
     area: 'inside_dhaka'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicateBlockedError, setDuplicateBlockedError] = useState(null);
   const [timerText, setTimerText] = useState('01:59:45');
 
   // Sync external selection if prop changes
@@ -147,6 +148,7 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
     }
 
     setIsSubmitting(true);
+    setDuplicateBlockedError(null);
 
     const orderData = {
       order_id: `ORD-${Date.now()}`,
@@ -164,19 +166,33 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
     };
 
     try {
-      if (supabase) {
-        const { error } = await supabase.from('orders').insert([orderData]);
-        if (error) console.warn('Supabase insert notice:', error.message);
+      // 1. Submit through secure server-side order boundary with Duplicate Protection
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok || resData.success === false) {
+        if (resData.code === 'DUPLICATE_ORDER_BLOCKED') {
+          setDuplicateBlockedError(resData.message);
+          return;
+        }
+        throw new Error(resData.message || 'অর্ডার সম্পন্ন করতে সমস্যা হয়েছে।');
       }
 
-      // Trigger High-Accuracy Purchase Tracking (Browser Pixel + CAPI + dataLayer)
+      const finalOrder = resData.order || orderData;
+
+      // 2. Trigger High-Accuracy Purchase Tracking ONLY on allowed successful orders
       trackPurchase({
-        order: orderData,
+        order: finalOrder,
         siteSettings
       });
 
       if (onOrderSuccess) {
-        onOrderSuccess(orderData);
+        onOrderSuccess(finalOrder);
       }
 
       setFormData({
@@ -186,9 +202,10 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
         area: 'inside_dhaka'
       });
       setQuantity(1);
+      setDuplicateBlockedError(null);
     } catch (err) {
       console.error('Order submission error:', err);
-      alert('অর্ডার সম্পন্ন করতে সমস্যা হয়েছে। দয়া করে সরাসরি হেল্পলাইনে কল করুন।');
+      alert(err.message || 'অর্ডার সম্পন্ন করতে সমস্যা হয়েছে। দয়া করে সরাসরি হেল্পলাইনে কল করুন।');
     } finally {
       setIsSubmitting(false);
     }
@@ -411,6 +428,34 @@ export default function DynamicOrderForm({ selectedProductId, onSelectProduct, o
                   </tfoot>
                 </table>
               </div>
+
+              {/* Duplicate Order Block Alert */}
+              {duplicateBlockedError && (
+                <div
+                  style={{
+                    background: '#fef2f2',
+                    border: '1.5px solid #ef4444',
+                    borderRadius: '12px',
+                    padding: '14px 16px',
+                    color: '#991b1b',
+                    fontSize: '14px',
+                    lineHeight: '1.5',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.12)'
+                  }}
+                >
+                  <span style={{ fontSize: '20px', lineHeight: 1 }}>⚠️</span>
+                  <div>
+                    <div style={{ fontWeight: 700, marginBottom: '2px', color: '#b91c1c' }}>
+                      অর্ডার গ্রহণ করা সম্ভব হয়নি:
+                    </div>
+                    <div>{duplicateBlockedError}</div>
+                  </div>
+                </div>
+              )}
 
               {/* Place Order Button */}
               <button className="order_place" type="submit" disabled={isSubmitting}>

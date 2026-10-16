@@ -4,13 +4,21 @@ import {
   Save,
   CheckCircle,
   ShieldCheck,
+  ShieldAlert,
   Key,
   DollarSign,
   Activity,
   RotateCw,
   ExternalLink,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  Clock,
+  Smartphone,
+  Globe,
+  Ban,
+  Eye,
+  Check,
+  Undo2
 } from 'lucide-react';
 import { useCms } from '../../context/CmsContext';
 
@@ -43,6 +51,41 @@ export default function EasyCourierSetup() {
   const [bdTesting, setBdTesting] = useState(false);
   const [bdSaving, setBdSaving] = useState(false);
 
+  // Duplicate Order Protection State
+  const [dupConfig, setDupConfig] = useState({
+    is_enabled: true,
+    block_same_phone: true,
+    block_same_ip: true,
+    duration_minutes: 10,
+    updated_at: null,
+    updated_by: 'admin'
+  });
+  const [initialDupConfig, setInitialDupConfig] = useState(null);
+  const [dupLogs, setDupLogs] = useState([]);
+  const [totalBlockedCount, setTotalBlockedCount] = useState(0);
+  const [dupLoading, setDupLoading] = useState(true);
+  const [dupSaving, setDupSaving] = useState(false);
+  const [showLogsTable, setShowLogsTable] = useState(true);
+
+  // Fetch Duplicate Protection server-side configuration
+  const fetchDupConfig = async () => {
+    try {
+      setDupLoading(true);
+      const res = await fetch('/api/admin-duplicate-config');
+      const data = await res.json();
+      if (data?.config) {
+        setDupConfig(data.config);
+        setInitialDupConfig(data.config);
+        setTotalBlockedCount(data.totalBlocked || 0);
+        setDupLogs(data.logs || []);
+      }
+    } catch (err) {
+      console.error('Error fetching duplicate protection settings:', err);
+    } finally {
+      setDupLoading(false);
+    }
+  };
+
   // Fetch BD Courier server-side configuration
   const fetchBdConfig = async () => {
     try {
@@ -72,6 +115,7 @@ export default function EasyCourierSetup() {
       });
     }
     fetchBdConfig();
+    fetchDupConfig();
   }, [siteSettings]);
 
   // Save standard shipping settings
@@ -153,6 +197,55 @@ export default function EasyCourierSetup() {
     }
   };
 
+  // Save Duplicate Protection Configuration
+  const handleSaveDuplicateConfig = async () => {
+    const mins = parseInt(dupConfig.duration_minutes, 10);
+    if (isNaN(mins) || mins < 1 || mins > 1440) {
+      showToast('ব্লক করার সময়সীমা ১ থেকে ১৪৪০ মিনিটের (২৪ ঘণ্টা) মধ্যে হতে হবে', 'error');
+      return;
+    }
+
+    setDupSaving(true);
+    try {
+      const res = await fetch('/api/admin-duplicate-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dupConfig)
+      });
+      const data = await res.json();
+      if (data?.success && data?.config) {
+        setDupConfig(data.config);
+        setInitialDupConfig(data.config);
+        showToast('ডুপ্লিকেট অর্ডার প্রতিরোধ সেটিংস সফলভাবে সেভ হয়েছে!');
+        await fetchDupConfig();
+      } else {
+        throw new Error(data?.error || 'Failed to save');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('সেটিংস সেভ করতে সমস্যা হয়েছে: ' + err.message, 'error');
+    } finally {
+      setDupSaving(false);
+    }
+  };
+
+  const handleResetDuplicateConfig = () => {
+    if (initialDupConfig) {
+      setDupConfig(initialDupConfig);
+      showToast('পূর্বের সেভ করা সেটিংস রিস্টোর করা হয়েছে');
+    }
+  };
+
+  const getHumanDuration = (mins) => {
+    const m = parseInt(mins, 10) || 0;
+    if (m <= 0) return '০ মিনিট';
+    if (m < 60) return `${m} মিনিট`;
+    const hours = Math.floor(m / 60);
+    const remMins = m % 60;
+    if (remMins === 0) return `${hours} ঘণ্টা`;
+    return `${hours} ঘণ্টা ${remMins} মিনিট`;
+  };
+
   const getStatusBadge = () => {
     switch (bdConfig.connection_status) {
       case 'connected':
@@ -191,13 +284,296 @@ export default function EasyCourierSetup() {
   return (
     <div className="easy-page-wrap">
       <div className="easy-card-header">
-        <h2 className="easy-page-title">Courier & Delivery Setup</h2>
+        <h2 className="easy-page-title">Fraud Protection & Courier Setup</h2>
         <p className="easy-page-desc">
-          কুরিয়ার সার্ভিস ইন্টিগ্রেশন, কাস্টমার ডেলিভারি রেশিও ভেরিফিকেশন এবং সারা দেশে ডেলিভারি চার্জ নিয়ন্ত্রণ করুন।
+          ডুপ্লিকেট ও ফেক অর্ডার প্রতিরোধ সিস্টেম (Anti-Duplicate Protection), কুরিয়ার সার্ভিস ইন্টিগ্রেশন এবং কাস্টমার ডেলিভারি রেশিও ভেরিফিকেশন নিয়ন্ত্রণ করুন।
         </p>
       </div>
 
       <div className="easy-form-stack">
+        {/* ================================================================= */}
+        {/* SECTION: Fraud Protection → Duplicate Order Protection             */}
+        {/* ================================================================= */}
+        <div className="easy-subcard" style={{ border: '2px solid #fed7aa', background: '#fffcf9' }}>
+          <div className="easy-section-head" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldAlert size={20} color="#ffffff" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16.5px', fontWeight: 700, color: '#9a3412' }}>
+                  Fraud Protection → Duplicate Order Protection (ডুপ্লিকেট ও ফেক অর্ডার প্রতিরোধ)
+                </h3>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12.5px', color: '#7c2d12' }}>
+                  একই ফোন নম্বর বা IP অ্যাড্রেস থেকে পুনরাবৃত্তি অর্ডার স্বয়ংক্রিয়ভাবে ব্লক করে ফেক অর্ডার ও অপচয় বন্ধ করুন।
+                </p>
+              </div>
+            </div>
+
+            {/* Active Status Badge */}
+            <div>
+              {dupConfig.is_enabled ? (
+                <span className="adm-badge adm-badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <CheckCircle size={13} /> প্রটেকশন সক্রিয় ({getHumanDuration(dupConfig.duration_minutes)})
+                </span>
+              ) : (
+                <span className="adm-badge adm-badge-danger" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <Ban size={13} /> নিষ্ক্রিয় (Disabled)
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #fed7aa' }}>
+            {/* Main Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #fed7aa' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>
+                  ডুপ্লিকেট অর্ডার ব্লকার সক্রিয় রাখুন (Enable Duplicate Order Protection)
+                </div>
+                <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+                  সক্রিয় থাকলে নির্ধারিত সময়সীমার মধ্যে একই ফোন অথবা একই IP থেকে নতুন অর্ডার সাবমিট বন্ধ থাকবে।
+                </div>
+              </div>
+              <label className="easy-switch">
+                <input
+                  type="checkbox"
+                  checked={dupConfig.is_enabled}
+                  onChange={(e) => setDupConfig({ ...dupConfig, is_enabled: e.target.checked })}
+                />
+                <span className="easy-slider round"></span>
+              </label>
+            </div>
+
+            {/* Dual Toggles Grid: Phone & IP (OR Logic) */}
+            <div className="adm-grid-2" style={{ marginBottom: '18px' }}>
+              {/* Phone Protection Toggle */}
+              <div style={{ background: '#ffffff', border: dupConfig.block_same_phone ? '1.5px solid #ea580c' : '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 16px', transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#1e293b' }}>
+                    <Smartphone size={17} color={dupConfig.block_same_phone ? '#ea580c' : '#64748b'} />
+                    <span>একই ফোন নম্বর থেকে রিপিট অর্ডার ব্লক</span>
+                  </div>
+                  <label className="easy-switch">
+                    <input
+                      type="checkbox"
+                      checked={dupConfig.block_same_phone}
+                      onChange={(e) => setDupConfig({ ...dupConfig, block_same_phone: e.target.checked })}
+                    />
+                    <span className="easy-slider round"></span>
+                  </label>
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#64748b', lineHeight: '1.45' }}>
+                  কাস্টমারের ফোন নম্বরের সব ভ্যারিয়েন্ট (01..., +8801..., বাংলা সংখ্যা) স্বাভাবিক করে ডাটাবেসের পূর্ববর্তী অর্ডারের সাথে মিলিয়ে দেখা হবে।
+                </div>
+              </div>
+
+              {/* IP Protection Toggle */}
+              <div style={{ background: '#ffffff', border: dupConfig.block_same_ip ? '1.5px solid #ea580c' : '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 16px', transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#1e293b' }}>
+                    <Globe size={17} color={dupConfig.block_same_ip ? '#ea580c' : '#64748b'} />
+                    <span>একই IP অ্যাড্রেস থেকে রিপিট অর্ডার ব্লক</span>
+                  </div>
+                  <label className="easy-switch">
+                    <input
+                      type="checkbox"
+                      checked={dupConfig.block_same_ip}
+                      onChange={(e) => setDupConfig({ ...dupConfig, block_same_ip: e.target.checked })}
+                    />
+                    <span className="easy-slider round"></span>
+                  </label>
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#64748b', lineHeight: '1.45' }}>
+                  একই ইন্টারনেট সংযোগ বা ডিভাইস থেকে ভিন্ন নাম/নম্বর ব্যবহার করে করা ফেক অর্ডার শনাক্ত ও ব্লক করবে।
+                </div>
+              </div>
+            </div>
+
+            {/* OR Logic Explanation Notice */}
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '10px 14px', marginBottom: '18px', fontSize: '12.5px', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={16} color="#2563eb" />
+              <span>
+                <strong>OR Logic সক্রিয়:</strong> Within the configured time window, a new order will be blocked if its protected phone number or IP address matches an eligible recent order.
+              </span>
+            </div>
+
+            {/* Configurable Duration Section */}
+            <div style={{ background: '#ffffff', border: '1px solid #fed7aa', borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                ডুপ্লিকেট অর্ডার ব্লক করার সময়সীমা (Duplicate Order Block Duration)
+              </label>
+              <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '12px' }}>
+                উইন্ডো প্রিভিউ: কাস্টমার একবার অর্ডার করার পর পরবর্তী <strong>{getHumanDuration(dupConfig.duration_minutes)}</strong> পর্যন্ত আর কোনো রিপিট অর্ডার সাবমিট করতে পারবেন না।
+              </div>
+
+              {/* Number Input + Unit */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '300px', marginBottom: '12px' }}>
+                <input
+                  type="number"
+                  className="easy-input"
+                  min="1"
+                  max="1440"
+                  value={dupConfig.duration_minutes}
+                  onChange={(e) => setDupConfig({ ...dupConfig, duration_minutes: e.target.value })}
+                  style={{ fontWeight: 700, fontSize: '15px' }}
+                />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>
+                  মিনিট (Minutes)
+                </span>
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { label: '৫ মিনিট', val: 5 },
+                  { label: '১০ মিনিট (ডিফল্ট)', val: 10 },
+                  { label: '৩০ মিনিট', val: 30 },
+                  { label: '১ ঘণ্টা (৬০ মি.)', val: 60 },
+                  { label: '২৪ ঘণ্টা (১ দিন)', val: 1440 }
+                ].map((item) => (
+                  <button
+                    key={item.val}
+                    type="button"
+                    onClick={() => setDupConfig({ ...dupConfig, duration_minutes: item.val })}
+                    className="adm-btn adm-btn-sm"
+                    style={{
+                      background: Number(dupConfig.duration_minutes) === item.val ? '#ea580c' : '#f8fafc',
+                      color: Number(dupConfig.duration_minutes) === item.val ? '#ffffff' : '#374151',
+                      borderColor: Number(dupConfig.duration_minutes) === item.val ? '#ea580c' : '#e2e8f0',
+                      fontWeight: 600
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons & Audit */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="adm-btn adm-btn-primary"
+                  style={{ background: '#ea580c', borderColor: '#ea580c' }}
+                  onClick={handleSaveDuplicateConfig}
+                  disabled={dupSaving}
+                >
+                  <Save size={15} />
+                  <span>{dupSaving ? 'সংরক্ষণ হচ্ছে...' : 'Save Settings (সেটিংস সংরক্ষণ করুন)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="adm-btn"
+                  style={{ background: '#ffffff', borderColor: '#e2e8f0', color: '#475569' }}
+                  onClick={handleResetDuplicateConfig}
+                >
+                  <Undo2 size={15} />
+                  <span>Cancel / Reset Changes</span>
+                </button>
+              </div>
+
+              {dupConfig.updated_at && (
+                <div style={{ fontSize: '11.5px', color: '#64748b' }}>
+                  সর্বশেষ আপডেট: {new Date(dupConfig.updated_at).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' })} • অ্যাডমিন: {dupConfig.updated_by}
+                </div>
+              )}
+            </div>
+
+            {/* Blocked Attempt Logs Card */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldAlert size={17} color="#dc2626" />
+                  <strong style={{ fontSize: '14px', color: '#1e293b' }}>
+                    সাম্প্রতিক ব্লক করা ডুপ্লিকেট অর্ডারের লগ (Blocked Attempt Logs)
+                  </strong>
+                  <span className="adm-badge adm-badge-danger" style={{ fontWeight: 700 }}>
+                    মোট ব্লক: {totalBlockedCount} টি
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-sm"
+                    style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#475569' }}
+                    onClick={fetchDupConfig}
+                    title="লগ রিফ্রেশ করুন"
+                  >
+                    <RotateCw size={13} className={dupLoading ? 'easy-spinning' : ''} />
+                    <span>রিফ্রেশ</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-sm"
+                    style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#475569' }}
+                    onClick={() => setShowLogsTable(!showLogsTable)}
+                  >
+                    {showLogsTable ? 'লগ আড়াল করুন' : 'লগ দেখুন'}
+                  </button>
+                </div>
+              </div>
+
+              {showLogsTable && (
+                dupLogs.length === 0 ? (
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                    ✓ কোনো ব্লক করা ডুপ্লিকেট অর্ডার রেকর্ড নেই।
+                  </div>
+                ) : (
+                  <div className="adm-table-wrap">
+                    <table className="easy-table" style={{ minWidth: '700px' }}>
+                      <thead>
+                        <tr>
+                          <th>সময় ও তারিখ</th>
+                          <th>ফোন নম্বর</th>
+                          <th>IP অ্যাড্রেস</th>
+                          <th>ব্লক করার কারণ</th>
+                          <th>পূর্ববর্তী অর্ডার</th>
+                          <th>অবশিষ্ট কুলডাউন</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dupLogs.map((log) => (
+                          <tr key={log.id}>
+                            <td style={{ fontSize: '12px', color: '#475569', whiteSpace: 'nowrap' }}>
+                              {new Date(log.created_at).toLocaleString('bn-BD', { dateStyle: 'short', timeStyle: 'short' })}
+                            </td>
+                            <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                              {log.phone_masked || log.phone}
+                            </td>
+                            <td style={{ fontFamily: 'monospace', fontSize: '12px', color: '#64748b' }}>
+                              {log.ip_masked || log.ip_address}
+                            </td>
+                            <td>
+                              {log.blocked_reason === 'both' ? (
+                                <span className="adm-badge adm-badge-danger">ফোন ও IP উভয়ই</span>
+                              ) : log.blocked_reason === 'same_phone' ? (
+                                <span className="adm-badge adm-badge-warning">ফোন নম্বর মিলেছে</span>
+                              ) : (
+                                <span className="adm-badge adm-badge-info">IP অ্যাড্রেস মিলেছে</span>
+                              )}
+                            </td>
+                            <td style={{ fontFamily: 'monospace', fontSize: '12px', color: '#0369a1' }}>
+                              #{log.matching_order_id}
+                            </td>
+                            <td style={{ fontSize: '12px', color: '#b91c1c', fontWeight: 600 }}>
+                              {log.cooldown_remaining_seconds ? `প্রায় ${Math.ceil(log.cooldown_remaining_seconds / 60)} মিনিট` : 'উইন্ডো অ্যাক্টিভ'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* ================================================================= */}
         {/* SECTION: BD Courier Official API Integration                      */}
         {/* ================================================================= */}

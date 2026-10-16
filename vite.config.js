@@ -23,6 +23,10 @@ export default defineConfig({
               handlerModule = await import('./api/admin-courier-config.js');
             } else if (urlPath === '/api/fb-capi') {
               handlerModule = await import('./api/fb-capi.js');
+            } else if (urlPath === '/api/orders') {
+              handlerModule = await import('./api/orders.js');
+            } else if (urlPath === '/api/admin-duplicate-config') {
+              handlerModule = await import('./api/admin-duplicate-config.js');
             }
 
             if (handlerModule && handlerModule.default) {

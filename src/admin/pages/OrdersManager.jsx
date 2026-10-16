@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -13,9 +13,14 @@ import {
   XCircle,
   FileText,
   Copy,
-  Check
+  Check,
+  ShieldCheck,
+  AlertTriangle,
+  RotateCw
 } from 'lucide-react';
 import { useCms } from '../../context/CmsContext';
+import { normalizeBdPhone } from '../../lib/phoneNormalizer';
+import CourierStatsCard from '../../components/CourierStatsCard';
 
 export default function OrdersManager() {
   const { orders, updateOrderStatus, deleteOrder, showToast } = useCms();
@@ -23,6 +28,64 @@ export default function OrdersManager() {
   const [statusTab, setStatusTab] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [copiedOrderId, setCopiedOrderId] = useState(null);
+
+  // BD Courier checks map by normalized phone
+  const [courierChecks, setCourierChecks] = useState({});
+  const [checkingPhone, setCheckingPhone] = useState(null);
+
+  // Fetch all existing courier checks from backend
+  const loadCourierChecks = async () => {
+    try {
+      const res = await fetch('/api/courier-check');
+      const json = await res.json();
+      if (json?.checks && Array.isArray(json.checks)) {
+        const map = {};
+        json.checks.forEach((c) => {
+          if (c.phone) {
+            const canonical = normalizeBdPhone(c.phone);
+            map[canonical] = c;
+          }
+        });
+        setCourierChecks(map);
+      }
+    } catch (err) {
+      console.warn('Could not load courier checks list:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadCourierChecks();
+  }, [orders]);
+
+  // Trigger manual courier check for an order
+  const handleTriggerCourierCheck = async (ord) => {
+    if (!ord?.phone) return;
+    const phone = ord.phone;
+    setCheckingPhone(phone);
+    try {
+      const res = await fetch('/api/courier-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: ord.phone,
+          orderId: ord.order_id
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'completed') {
+        showToast('✓ কুরিয়ার হিস্ট্রি সফলভাবে লোড হয়েছে!');
+      } else if (data.status === 'disabled') {
+        showToast('BD Courier ইন্টিগ্রেশন সেটিংস থেকে বন্ধ আছে', 'error');
+      } else {
+        showToast(data.error || 'কুরিয়ার যাচাই ব্যর্থ হয়েছে', 'error');
+      }
+      await loadCourierChecks();
+    } catch (err) {
+      showToast('কুরিয়ার রিকোয়েস্টে ত্রুটি হয়েছে', 'error');
+    } finally {
+      setCheckingPhone(null);
+    }
+  };
 
   const copyOrderDetails = (ord) => {
     if (!ord) return;
@@ -86,6 +149,100 @@ export default function OrdersManager() {
     }
   };
 
+  // Render Courier Ratio pill for table row
+  const renderCourierBadge = (ord) => {
+    const norm = normalizeBdPhone(ord.phone);
+    const check = courierChecks[norm];
+
+    if (!check) {
+      return (
+        <button
+          type="button"
+          className="adm-btn adm-btn-sm"
+          style={{ fontSize: '11px', padding: '3px 8px', borderColor: '#fed7aa', color: '#c2410c' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTriggerCourierCheck(ord);
+          }}
+          disabled={checkingPhone === ord.phone}
+          title="BD Courier API দিয়ে গ্রাহকের ডেলিভারি হিস্ট্রি চেক করুন"
+        >
+          {checkingPhone === ord.phone ? 'চেক হচ্ছে...' : '🔍 চেক করুন'}
+        </button>
+      );
+    }
+
+    if (check.status === 'completed' && check.data) {
+      const summary = check.data.summary || {};
+      const total = Number(summary.total_parcel || 0);
+      const success = Number(summary.success_parcel || 0);
+      const ratio = Number(summary.success_ratio || 0);
+
+      if (total === 0) {
+        return (
+          <span
+            className="adm-badge"
+            style={{ background: '#f1f5f9', color: '#475569', fontSize: '11.5px', whiteSpace: 'nowrap' }}
+            title="নতুন গ্রাহক (পূর্ববর্তী পার্সেল নেই)"
+          >
+            নতুন গ্রাহক (০)
+          </span>
+        );
+      }
+
+      const isHigh = ratio >= 80;
+      const isMed = ratio >= 60 && ratio < 80;
+      const bg = isHigh ? '#ecfdf5' : isMed ? '#fffbeb' : '#fff1f2';
+      const col = isHigh ? '#059669' : isMed ? '#d97706' : '#e11d48';
+
+      return (
+        <span
+          className="adm-badge"
+          style={{
+            background: bg,
+            color: col,
+            borderColor: col,
+            fontWeight: 700,
+            fontSize: '11.5px',
+            whiteSpace: 'nowrap'
+          }}
+          title={`মোট পার্সেল: ${total}, সফল: ${success}, ক্যানসেল: ${summary.cancelled_parcel || 0}`}
+        >
+          {ratio}% ({success}/{total})
+        </span>
+      );
+    }
+
+    if (check.status === 'failed' || check.status === 'unknown') {
+      return (
+        <span className="adm-badge adm-badge-danger" style={{ fontSize: '11px' }} title={check.error || 'Check failed'}>
+          ব্যর্থ / অজানা
+        </span>
+      );
+    }
+
+    if (check.status === 'pending') {
+      return (
+        <span className="adm-badge adm-badge-warning" style={{ fontSize: '11px' }}>
+          চেক হচ্ছে...
+        </span>
+      );
+    }
+
+    return null;
+  };
+
+  // Find all orders that reuse the same phone number as selectedOrder
+  const samePhoneOrders = selectedOrder
+    ? orders.filter(
+        (o) => normalizeBdPhone(o.phone) === normalizeBdPhone(selectedOrder.phone)
+      )
+    : [];
+
+  const selectedCheck = selectedOrder
+    ? courierChecks[normalizeBdPhone(selectedOrder.phone)]
+    : null;
+
   return (
     <div>
       {/* Top Header */}
@@ -104,7 +261,7 @@ export default function OrdersManager() {
             অর্ডার ব্যবস্থাপনা ({orders.length})
           </h2>
           <p style={{ fontSize: '13px', color: 'var(--adm-text-subdued)', margin: '2px 0 0 0' }}>
-            ক্যাশ অন ডেলিভারি ও ওয়েবসাইট থেকে আসা সমস্ত অর্ডারের বিবরণ
+            ক্যাশ অন ডেলিভারি, কাস্টমার কুরিয়ার স্কোর ও ওয়েবসাইট থেকে আসা সমস্ত অর্ডারের বিবরণ
           </p>
         </div>
       </div>
@@ -159,20 +316,21 @@ export default function OrdersManager() {
       {/* Orders Table */}
       <div className="adm-card">
         {filteredOrders.length === 0 ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--adm-text-subdued)' }}>
-            কোনো অর্ডার খুঁজে পাওয়া যায়নি
+          <div className="adm-card-body" style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <p style={{ color: 'var(--adm-text-subdued)', margin: 0 }}>কোনো অর্ডার পাওয়া যায়নি।</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="adm-table adm-table-responsive">
+          <div className="adm-table-responsive">
+            <table className="adm-table">
               <thead>
                 <tr>
                   <th>অর্ডার আইডি</th>
                   <th>তারিখ</th>
                   <th>গ্রাহকের তথ্য</th>
+                  <th>কুরিয়ার হিস্ট্রি</th>
                   <th>প্যাকেজ / পণ্য</th>
                   <th>টোটাল</th>
-                  <th>স্ট্যাটাস পরিবর্তন</th>
+                  <th>স্ট্যাটাস</th>
                   <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
                 </tr>
               </thead>
@@ -195,9 +353,14 @@ export default function OrdersManager() {
                           {ord.phone}
                         </a>
                       </div>
-                      <div style={{ fontSize: '11.5px', color: 'var(--adm-text-subdued)', maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '11.5px', color: 'var(--adm-text-subdued)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {ord.address}, {ord.area}
                       </div>
+                    </td>
+
+                    {/* Courier Ratio Column */}
+                    <td data-label="কুরিয়ার হিস্ট্রি">
+                      {renderCourierBadge(ord)}
                     </td>
 
                     <td data-label="প্যাকেজ">
@@ -301,7 +464,7 @@ export default function OrdersManager() {
         >
           <div
             className="adm-card"
-            style={{ width: '92%', maxWidth: '520px', margin: 0, maxHeight: '90vh', overflowY: 'auto' }}
+            style={{ width: '92%', maxWidth: '560px', margin: 0, maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="adm-card-header">
@@ -348,6 +511,73 @@ export default function OrdersManager() {
                     : '📋 এক ক্লিকে সম্পূর্ণ অর্ডার কপি করুন (কুরিয়ার / নোট)'}
                 </span>
               </button>
+
+              {/* BD Courier Verification Card inside Admin Modal */}
+              <div style={{ marginBottom: '16px' }}>
+                <CourierStatsCard
+                  data={selectedCheck?.data}
+                  loading={checkingPhone === selectedOrder.phone}
+                  status={selectedCheck?.status || 'unverified'}
+                  error={selectedCheck?.error}
+                  isCached={true}
+                  retrievedAt={selectedCheck?.completed_at || selectedCheck?.created_at}
+                />
+
+                {!selectedCheck && (
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-sm"
+                    style={{
+                      width: '100%',
+                      background: '#fffaf5',
+                      borderColor: '#fed7aa',
+                      color: '#ea580c',
+                      fontWeight: 600,
+                      marginTop: '6px'
+                    }}
+                    onClick={() => handleTriggerCourierCheck(selectedOrder)}
+                    disabled={checkingPhone === selectedOrder.phone}
+                  >
+                    <ShieldCheck size={14} />
+                    <span>{checkingPhone === selectedOrder.phone ? 'যাচাই করা হচ্ছে...' : '🔍 BD Courier দিয়ে ডেলিভারি হিস্ট্রি চেক করুন'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Multiple Orders with Same Phone Indicator */}
+              {samePhoneOrders.length > 1 && (
+                <div
+                  style={{
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    marginBottom: '16px',
+                    fontSize: '12px',
+                    color: '#166534'
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                    🔄 একই গ্রাহক নম্বরে মোট {samePhoneOrders.length} টি অর্ডার রয়েছে (ক্যাশ রেজাল্ট শেয়ার্ড):
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {samePhoneOrders.map((o) => (
+                      <span
+                        key={o.order_id}
+                        style={{
+                          background: o.order_id === selectedOrder.order_id ? '#dcfce7' : '#ffffff',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid #86efac',
+                          fontWeight: o.order_id === selectedOrder.order_id ? 700 : 500
+                        }}
+                      >
+                        #{o.order_id} ({o.status || 'pending'})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Customer Box */}
               <div

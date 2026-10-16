@@ -2,10 +2,76 @@ import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Phone, Check, Package, ArrowLeft, Copy } from 'lucide-react';
 import { useCms } from '../context/CmsContext';
+import CourierStatsCard from '../components/CourierStatsCard';
 
 export default function OrderSuccessPage({ order, onReturnHome }) {
   const { siteSettings } = useCms();
   const [copied, setCopied] = useState(false);
+  const [courierState, setCourierState] = useState({
+    loading: true,
+    data: null,
+    status: 'pending',
+    error: null,
+    isCached: false,
+    retrievedAt: null
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    async function checkCourier() {
+      if (!order?.phone) {
+        setCourierState({ loading: false, status: 'disabled' });
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/courier-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: order.phone,
+            orderId: order.order_id
+          })
+        });
+
+        const json = await res.json();
+        if (isMounted) {
+          if (json.status === 'completed' && json.data) {
+            setCourierState({
+              loading: false,
+              data: json.data,
+              status: 'completed',
+              isCached: json.source === 'cache',
+              retrievedAt: json.data?.retrieved_at,
+              error: null
+            });
+          } else if (json.status === 'disabled') {
+            setCourierState({ loading: false, status: 'disabled' });
+          } else {
+            setCourierState({
+              loading: false,
+              status: json.status || 'failed',
+              error: json.error || null,
+              isCached: json.source === 'cache'
+            });
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setCourierState({
+            loading: false,
+            status: 'failed',
+            error: 'কুরিয়ার তথ্য লোড করতে সমস্যা হয়েছে'
+          });
+        }
+      }
+    }
+
+    checkCourier();
+    return () => {
+      isMounted = false;
+    };
+  }, [order?.phone, order?.order_id]);
 
   // Trigger celebration confetti on mount
   useEffect(() => {
@@ -133,6 +199,13 @@ export default function OrderSuccessPage({ order, onReturnHome }) {
               <span className="success-total-lbl">সর্বমোট মূল্য</span>
               <span className="success-total-val">৳ {formattedPrice}</span>
             </div>
+
+            {/* Courier Verification & Delivery Statistics */}
+            {courierState.status !== 'disabled' && (
+              <div style={{ marginTop: '16px' }}>
+                <CourierStatsCard {...courierState} />
+              </div>
+            )}
 
             {/* Important Notice Box */}
             <div className="success-notice-box">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { normalizeBdPhone, isValidBdPhone } from '../lib/phoneNormalizer';
 
 const PRODUCTS = {
   pack_1: {
@@ -92,8 +93,8 @@ export default function OrderForm({ selectedPackage, onSelectPackage, onOrderSuc
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const phoneRegex = /^01[3-9]\d{8}$/;
-    if (!phoneRegex.test(formData.phone.trim())) {
+    const normalizedPhone = normalizeBdPhone(formData.phone);
+    if (!isValidBdPhone(normalizedPhone)) {
       alert('অনুগ্রহ করে সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 017XXXXXXXX)');
       return;
     }
@@ -108,7 +109,7 @@ export default function OrderForm({ selectedPackage, onSelectPackage, onOrderSuc
     const orderData = {
       order_id: `ORD-${Date.now()}`,
       name: formData.name.trim(),
-      phone: formData.phone.trim(),
+      phone: normalizedPhone,
       address: formData.address.trim(),
       area: formData.area === 'inside_dhaka' ? 'ঢাকার ভিতরে' : 'ঢাকার বাইরে',
       package_name: currentProduct.name,
